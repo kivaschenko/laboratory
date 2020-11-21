@@ -1,4 +1,3 @@
-from datetime import date
 from sqlalchemy import (
     Column,
     Integer,
@@ -11,18 +10,15 @@ from .meta import Base
 
 
 class Solution(Base):
-    __tablename__ = 'solution'
+    __tablename__ = 'solutions'
     id = Column(Integer, primary_key=True)
-    name = Column(String)
-    normative_id = Column(Integer)
+    normative = Column(String(255))
     amount = Column(Numeric)
     created_at = Column(Date)
     due_date = Column(Date)
+    user_id = Column(Integer)
 
     def __repr__(self):
-        return f'<Solution(id={self.id} {self.name} amount={self.amount} ml \
-created at: {self.created_at})>'
+        return f'<Solution(id={self.id} {self.normative} amount={self.amount} \
+ml created at: {self.created_at})>'
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.created_at = date.today()

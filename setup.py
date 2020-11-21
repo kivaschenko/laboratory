@@ -22,7 +22,8 @@ requires = [
     'zope.sqlalchemy',
     # new
     'psycopg2',
-    'deform'
+    'deform',
+    'bcrypt'
 ]
 
 tests_require = [

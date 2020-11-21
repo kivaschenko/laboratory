@@ -5,15 +5,22 @@ from pyramid.paster import bootstrap, setup_logging
 from sqlalchemy.exc import OperationalError
 
 from .. import models
-
+from .db_seed import substances
 
 def setup_models(dbsession):
     """
     Add or update models / fixtures in the database.
 
     """
-    model = models.mymodel.MyModel(name='one', value=1)
-    dbsession.add(model)
+    for subst in substances:
+        new_subst = models.substance.Substance(name = subst[0],
+            measurement = subst[1],  precursor = subst[2])
+        dbsession.add(new_subst)
+    
+    oksana = models.user.User(nickname='oksana', role='editor',
+        email='o.v.ivaschenko@gmail.com')
+    oksana.set_password('Teodor235813')
+    dbsession.add(oksana)
 
 
 def parse_args(argv):

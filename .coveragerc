@@ -1,0 +1,3 @@
+[run]
+source = laboratory
+omit = laboratory/test*

@@ -1,0 +1,6 @@
+{% extends 'layout.jinja2'  %}
+
+{% block content %}
+    <p><span class="text-danger">{{message}}</span></p>
+    {{ form.render()|safe }}
+{% endblock %}

@@ -27,7 +27,7 @@ p {
   font-weight: 700;
 }
 .starter-template {
-  margin-top: 250px;
+  margin-top: 50px;
 }
 .starter-template .content {
   margin-left: 10px;
@@ -151,4 +151,10 @@ p {
   .starter-template .copyright {
     margin-top: 20px;
   }
+}
+
+.starter-template .nav-menu {{
+    margin-top: 40px;
+    padding: 0;
+    list-style: none;
 }

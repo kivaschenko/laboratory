@@ -13,8 +13,8 @@ def setup_models(dbsession):
 
     """
     for subst in substances:
-        new_subst = models.substance.Substance(name = subst[0],
-            measurement = subst[1],  precursor = subst[2])
+        new_subst = models.substance.Substance(name = subst[0], 
+            measurement = subst[1])
         dbsession.add(new_subst)
     
     oksana = models.user.User(nickname='oksana', role='editor',

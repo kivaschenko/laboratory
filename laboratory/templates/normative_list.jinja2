@@ -1,0 +1,42 @@
+{% extends 'layout.jinja2' %}
+
+{% block content %}
+<div class="content">
+  <h1><span class="smaller">Рецепти розчинів</span></h1>
+  <p class="lead"><span class="font-normal">Перелік за назвами</span>, кнопка для створення нових<br>
+  Щоб додати новий рецепт - натисніть кнопку внизу.</p>
+{% if normative_list %} 
+ <table class="table">
+  	<thead>
+  		<tr>
+  			<th>#</th>
+  			<th>назва розчину</th>
+  			<th>вихід, мл</th>
+  			<th>компоненти</th>
+  		</tr>
+  	</thead>
+  	<tbody>
+
+  			{% for norm in normative_list %}
+  		<tr>
+  			<td>{{norm['id']}}</td>
+  			<td>{{norm['name']}}</td>
+  			<td>{{norm['output']}}</td>
+        <td>
+          {% for k,v in norm['data'].items() %}
+            <ul>
+              <li><strong>{{k}}: </strong>{{v}}</li>
+            </ul>
+          {% endfor %}
+        </td>
+  		</tr>
+  			{% endfor %}
+  	</tbody>
+  </table>
+{% else %}
+<p>Немає рецептів поки що...</p>
+{% endif %}
+  <a href="/new-normative" class="btn btn-default">Створити новий рецепт розчину</a>
+</div>
+
+{% endblock content %}

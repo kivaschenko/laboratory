@@ -1,3 +1,11 @@
 def includeme(config):
     config.add_static_view('static', 'static', cache_max_age=3600)
     config.add_route('home', '/')
+    config.add_route('substances', '/substances')
+    config.add_route('add_substance', '/add_substance')
+    config.add_route('delete_substance', '/substance/{subs_id}/delete')
+    config.add_route('solutions', '/solutions')
+    config.add_route('create_solution', '/create_solution')
+    config.add_route('new_normative', '/new-normative')
+    config.add_route('new_norm_next', '/new-norm-next/{name}/{output}/{data}')
+    config.add_route('normative_list', '/normatives')

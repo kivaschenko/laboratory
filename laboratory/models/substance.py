@@ -2,7 +2,7 @@ from sqlalchemy import (
     Column,
     Integer,
     String,
-    Boolean,
+    Boolean
 )
 from .meta import Base
 
@@ -12,9 +12,8 @@ class Substance(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
     measurement = Column(String(10), nullable=False)
-    precursor = Boolean()
     def __repr__(self):
         return f'<Substance(id={self.id} {self.name} measurement: \
-{self.measurement} is precursor?: {self.precursor})>'
+{self.measurement})>'
 
 

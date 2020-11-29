@@ -1,10 +1,8 @@
 from sqlalchemy import (
     Column,
     Integer,
-    Numeric,
     String,
     JSON,
-    Boolean
 )
 from .meta import Base
 

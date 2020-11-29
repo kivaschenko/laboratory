@@ -1,0 +1,12 @@
+{% extends 'layout.jinja2' %}
+
+{% block content %}
+<div class="content">
+    <h2>{{ name }}</h2>
+    <p class="lead">Введіть кількість рективів та розчинів у відповідні поля 
+форми та натисніть кнопку для запису в базу даних.</p>
+    <p>{{message}}</p>
+    {{ form|safe}}
+</div>
+
+{% endblock %}

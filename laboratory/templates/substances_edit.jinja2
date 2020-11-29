@@ -2,17 +2,16 @@
 
 {% block content %}
 <div class="content">
-<a href="/substances/edit" class="btn btn-warning">Редагувати каталог</a>
-<a href="/buy-substances" class="btn btn-primary">Приход реактивів на склад</a>
+<h2><span class="smaller font-bold">Редагувати каталог реактивів</span></h2>
 <hr>
-<h2>Каталог реактивів</h2>
-
+<a href="/add_substance" class="btn btn-default">Новий реактив в каталог</a>
 <table class="table">
     <thead>
         <tr>
             <th>#</th>
             <th>Назва</th>
             <th>Од. виміру</th>
+            <th>Видалити</th>
         </tr>
     </thead>
     <tbody>
@@ -22,6 +21,7 @@
             <td>{{ subs['id'] }}</td>
             <td>{{ subs['name'] }}</td>
             <td>{{ subs['measurement'] }}</td>
+            <td><a href="/substance/{{ subs['id'] }}/delete" ><i class="glyphicon glyphicon-trash"></i> Видалити</a></td>
         </tr>
             {% endfor %}
         {% else %}

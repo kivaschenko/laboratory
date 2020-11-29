@@ -7,17 +7,22 @@
     <meta name="description" content="pyramid web application">
     <meta name="author" content="Pylons Project">
     <link rel="shortcut icon" href="{{request.static_url('laboratory:static/pyramid-16x16.png')}}">
-
-    <title>Cookiecutter Starter project for the Pyramid Web Framework</title>
-
+    {% block title %}
+    <title>Програма для обліку реактивів в лабораторії</title>
+    {% endblock title %}
     <!-- Bootstrap core CSS -->
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-
-
 
     <!-- Custom styles for this scaffold -->
     <link href="{{request.static_url('laboratory:static/theme.css')}}" rel="stylesheet">
 
+    <!-- Datables -->
+  
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.22/js/dataTables.bootstrap.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.22/css/dataTables.bootstrap.min.css">
     <!-- HTML5 shiv and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
       <script src="//oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js" integrity="sha384-0s5Pv64cNZJieYFkXYOTId2HMA2Lfb6q2nAcx2n0RTLUnCAoTTsS0nKEO27XyKcY" crossorigin="anonymous"></script>
@@ -34,13 +39,24 @@
             <img class="logo img-responsive" src="{{request.static_url('laboratory:static/pyramid.png') }}" alt="pyramid web framework">
             <div class="nav-menu">
               <ul>
-                <li><i class="glyphicon glyphicon-home icon-muted"></i><a href="/"> Головна сторінка</a></li>
-                <li><i class="glyphicon glyphicon-barcode"></i><a href="/substances"> Реактиви каталог</a></li>
-                <li><i class="glyphicon glyphicon-tint"></i><a href="#"> Розчини залишки</a></li>
-                <li><i class="glyphicon glyphicon-search"></i><a href="/normatives"> Рецепти розчинів</a></li>
-                <li><i class="glyphicon glyphicon-piggy-bank"></i><a href="#"> Залишки реактивів</a></li>
-                <li><i class="glyphicon glyphicon-th-list"></i><a href="#"> Виконані аналізи</a></li>
-                <li><i class="glyphicon glyphicon-scale"></i><a href="#"> Статистика</a></li>
+                <li><i class="glyphicon glyphicon-home icon-muted"></i>
+                  <a href="/"> Головна сторінка</a></li>
+                <li><i class="glyphicon glyphicon-barcode icon-muted"></i>
+                  <a href="/substances"> Реактиви каталог</a></li>
+                <li><i class="glyphicon glyphicon-piggy-bank icon-muted"></i>
+                  <a href="/stock-reactives"> Склад реактивів</a></li>
+                <li><i class="glyphicon glyphicon-pushpin"></i>
+                  <a href="#">Інвентаризація реактивів</a></li>
+                <li><i class="glyphicon glyphicon-info-sign icon-muted"></i>
+                  <a href="/normatives"> Рецепти розчинів</a></li>
+                <li><i class="glyphicon glyphicon-tint icon-muted"></i>
+                  <a href="/solutions"> Розчини залишки</a></li>
+                <li><i class="glyphicon glyphicon-book icon-muted"></i>
+                  <a href="/recipes"> Нормативи аналізів</a></li>
+                <li><i class="glyphicon glyphicon-search icon-muted"></i>
+                  <a href="/analysis-done"> Виконані аналізи</a></li>
+                <li><i class="glyphicon glyphicon-th-list icon-muted"></i>
+                  <a href="/statistic"> Статистика витрат</a></li>
               </ul>
             </div>
           </div>
@@ -65,11 +81,8 @@
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="//code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
-    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-    <!-- Datables -->
-    <script src="https://code.jquery.com/jquery-3.5.1.js">
-    <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js">
-    <script src="https://cdn.datatables.net/1.10.22/js/dataTables.bootstrap.min.js
+    <!-- <script src="//code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script> -->
+
   </body>
 </html>

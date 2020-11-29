@@ -12,18 +12,18 @@ from .. import models
 
 #===============
 # SUBSTANCES
-@view_config(route_name='add_substance', 
+@view_config(route_name='add_substance',
              renderer='../templates/add_substance.jinja2')
 def new_substance(request):
     message = ''
     measure_types = (
         ('г', 'грам'),
-        ('мл', 'мілілітр'),
+        ('мл', 'міллілітр'),
         ('шт', 'штука')
     )
     class SubstanceSchema(colander.Schema):
         name = colander.SchemaNode(colander.String(), title="Назва реактиву")
-        measurement = colander.SchemaNode(colander.String(), 
+        measurement = colander.SchemaNode(colander.String(),
                     widget=deform.widget.SelectWidget(values=measure_types),
                     title="Одиниця виміру")
     schema = SubstanceSchema().bind(request=request)
@@ -56,7 +56,8 @@ def delete_substance(request):
 
 @view_config(route_name='substances', renderer='../templates/substances.jinja2')
 def substances_list(request):
-    query = request.dbsession.query(models.Substance).all()
+    query = request.dbsession.query(models.Substance)\
+                   .order_by(models.Substance.name).all()
     subs_list = []
     if len(query) > 0:
         subs_list = [q.__dict__ for q in query]
@@ -77,7 +78,7 @@ def list_solutions(request):
 #=======================
 # NORMATIVES
 
-@view_config(route_name='normative_list', 
+@view_config(route_name='normative_list',
              renderer='../templates/normative_list.jinja2')
 def get_all_normatives(request):
     message = ''
@@ -93,23 +94,23 @@ def get_all_normatives(request):
         normative_list=normative_list
         )
 
-@view_config(route_name='new_normative', 
+@view_config(route_name='new_normative',
              renderer='../templates/new_normative.jinja2')
 def new_normative(request):
     message = ''
     subs_query = request.dbsession.query(models.Substance).all()
     subs_list = []
     if len(subs_query) > 0:
-        subs_list = [q.__dict__ for q in subs_query] 
+        subs_list = [q.__dict__ for q in subs_query]
     else:
         message = 'Каталог реактивів пустий! Неможливо створити рецепт.'
         return {'message': message}
-    choices = ( (subs['id'], subs['name']) for subs in subs_list )       
+    choices = ( (subs['id'], subs['name']) for subs in subs_list )
     class NormativeSchema(colander.Schema):
         name = colander.SchemaNode(colander.String(), title="Назва розчину")
         output = colander.SchemaNode(
             colander.Integer(),
-            title="Об'єм вихід в мл", 
+            title="Об'єм вихід в мл",
             description='Ціле число, наприклад 1000')
         data = colander.SchemaNode(
             colander.Set(), title="відмітити необхідні речовини",
@@ -137,7 +138,7 @@ def new_norm_next(request):
     class NextFormSchema(colander.Schema):
         name = colander.SchemaNode(colander.String(), title="Назва розчину",
              default=name_solution)
-        output = colander.SchemaNode(colander.Integer(), title="Об'єм вихід в мл", 
+        output = colander.SchemaNode(colander.Integer(), title="Об'єм вихід в мл",
                default=int(output_))
         def after_bind(self, schema, kwargs):
             req = kwargs['request']
@@ -149,9 +150,9 @@ def new_norm_next(request):
             subs_list = [sq.__dict__ for sq in subs_query]
             for subs in subs_list:
                 self[subs['name']] = colander.SchemaNode(colander.Decimal(),
-                    title=subs["name"] + ', '+subs["measurement"], 
+                    title=subs["name"] + ', '+subs["measurement"],
                     default=0.01,
-                    validator=colander.Range(min=0, 
+                    validator=colander.Range(min=0,
                             max=decimal.Decimal("999.99")),
                     widget=deform.widget.TextInputWidget(
                         attributes={
@@ -163,7 +164,7 @@ def new_norm_next(request):
                         })
                     )
     schema = NextFormSchema().bind(request=request)
-    button = deform.form.Button(name='submit', title="Створити рецепт", 
+    button = deform.form.Button(name='submit', title="Створити рецепт",
                                 type='submit')
     form = deform.Form(schema, buttons=(button,))
     appstruct = {'name': name_solution, 'output': output_}
@@ -171,14 +172,10 @@ def new_norm_next(request):
         controls = request.POST.items()
         try:
             deserialized = form.validate(controls)
-            print('try appstruct --> ', deserialized)
-# {'name': 'Новий рецепт розчину', 'output': 1000, 'Кислота сірчана концентрована': Decimal('198.80'), 'Вода H2O': Decimal('801.2')}
             new_name = deserialized.pop('name')
             new_output = deserialized.pop('output')
-            print("deserialized --> ", deserialized)
             new_data = {k: float(v) for k, v in deserialized.items()}
             new_data = json.dumps(new_data)
-            print("new_data --> ", new_data)
             new_normative = models.Normative(
                 name=new_name,
                 output=new_output,

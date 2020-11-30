@@ -2,10 +2,12 @@ import json
 import decimal
 import colander
 import deform
+import datetime
 from deform.exception import ValidationFailure
 from pyramid.view import view_config
 from pyramid.response import Response
 from pyramid.httpexceptions import HTTPFound
+from sqlalchemy import text, desc
 from sqlalchemy.exc import DBAPIError
 
 from .. import models
@@ -91,7 +93,8 @@ def substances_list(request):
         subs_list = [q.__dict__ for q in query]
     return {"subs_list":subs_list}
 
-@view_config(route_name='substances_edit', 
+
+@view_config(route_name='substances_edit',
              renderer='../templates/substances_edit.jinja2')
 def substances_edit(request):
     query = request.dbsession.query(models.Substance)\
@@ -103,20 +106,240 @@ def substances_edit(request):
 
 #========================
 # STOCK
-@view_config(route_name='buy_substances', renderer='../templates/buy_substances')
+@view_config(route_name='buy_substance',
+             renderer='../templates/buy_substance.jinja2')
+def input_substance(request):
+    message = ''
+    subs_query = request.dbsession.query(models.Substance).all()
+    subs_list = []
+    if len(subs_query) > 0:
+        subs_list = [q.__dict__ for q in subs_query]
+    else:
+        message = 'Каталог реактивів пустий! Неможливо створити рецепт.'
+        return {'message': message}
+    choices = (
+        (subs['name'], subs['name'] + ' , ' + subs['measurement'])
+        for subs in subs_list
+    )
+    class BuySchema(colander.Schema):
+        substance_name = colander.SchemaNode(colander.String(),
+            title='Реактив (речовина, індикатор)',
+            widget=deform.widget.SelectWidget(values=choices))
+        amount = colander.SchemaNode(colander.Decimal(), default=0.01,
+            validator=colander.Range(min=0, max=decimal.Decimal("100000.00")),
+            title="Кількість",
+            description='Вибреріть реактив (речовину, індикатор)',
+            widget=deform.widget.TextInputWidget(
+                attributes={
+                    "type": "numeric",
+                    "inputmode": "decimal",
+                    "step": "0.01",
+                    "min": "0",
+                    "max": "100000.00"
+                }))
+        price = colander.SchemaNode(colander.Decimal(), default=0.01,
+            validator=colander.Range(min=0, max=decimal.Decimal("9999.99")),
+            title=" Ціна, грн.",
+            widget=deform.widget.TextInputWidget(
+                attributes={
+                    "type": "numeric",
+                    "inputmode": "decimal",
+                    "step": "0.01",
+                    "min": "0",
+                    "max": "9999.99"
+                }))
+        notes = colander.SchemaNode(colander.String(),
+            title="Примітка",
+            missing='',
+            validator=colander.Length(max=600),
+            widget=deform.widget.TextAreaWidget(rows=5, cols=60),
+            description="Необов'язково, до 600 символів з пробілами",)
+    schema = BuySchema().bind(request=request)
+    button = deform.form.Button(name='submit', type='submit',
+        title="Оприходувати на склад")
+    form = deform.Form(schema, buttons=(button,))
+    if 'submit' in request.POST:
+        controls = request.POST.items()
+        try:
+            appstruct = form.validate(controls)
+            substance_name = appstruct['substance_name']
+            certain_substance = request.dbsession.query(models.Substance)\
+                .filter(models.Substance.name==substance_name).first()
+            measurement = certain_substance.measurement
+            amount = float(appstruct['amount'])
+            price = float(appstruct['price'])
+            total_cost = round(price * amount, 2)
+            notes = appstruct['notes']
+            new_stock = models.Stock(
+                substance_name=substance_name,
+                measurement=measurement,
+                amount=amount,
+                price=price,
+                total_cost=total_cost,
+                notes=notes
+            )
+            request.dbsession.add(new_stock)
+            next_url = request.route_url('stock_history')
+            return HTTPFound(location=next_url)
+        except ValidationFailure as e:
+            return dict(
+                form=e.render()
+            )
+    return dict(
+        form=form.render(),
+        message=message
+    )
 
 
+@view_config(route_name='stock_history',
+             renderer='../templates/stock_history.jinja2')
+def stock_all_parties(request):
+    message = ''
+    query = request.dbsession.query(models.Stock)\
+            .order_by(models.Stock.creation_date.desc()).all()
+    history = []
+    if len(query) == 0:
+        message = 'Немає приходів і розходів. Історія складу пуста.'
+    history = [q.__dict__ for q in query]
+    for item in history:
+        item['creation_date'] = item['creation_date'].strftime('%Y-%m-%d %H:%M')
+    return dict(
+        message=message,
+        history=history
+    )
+
+
+@view_config(route_name='stock', renderer='.//templates/stock.jinja2')
+def get_aggregate_stock(request):
+    message = ''
+    stock_list = []
+    textual_sql = """SELECT stock.substance_name AS substance_name,
+                            stock.measurement AS measurement,
+                            SUM (stock.amount) AS total_amount,
+                            SUM (stock.total_cost) AS sum_cost
+                            FROM stock
+                            GROUP BY stock.substance_name,
+                                stock.measurement"""
+    try:
+        query = request.dbsession.execute(textual_sql).fetchall()
+        stock_list = [q for q in query]
+    except DBAPIError:
+        message = db_err_msg
+    return {'stock_list': stock_list, 'message': message}
 
 
 #=======================
 # SOLUTIONS
+
 @view_config(route_name='solutions', renderer='../templates/solutions.jinja2')
 def list_solutions(request):
     query = request.dbsession.query(models.Solution).all()
     solutions = []
     if len(query) > 0:
         solutions = [q.__dict__ for q in query]
+    print('solutions --> ', solutions)
     return {"solutions": solutions}
+
+
+@view_config(route_name='create_solution',
+             renderer='../templates/create_solution.jinja2')
+def make_new_solution(request):
+    normative_name = request.matchdict['normative']
+    current_normative = request.dbsession.query(models.Normative).\
+        filter(models.Normative.name==normative_name).first()
+    current_normative = current_normative.__dict__
+    output = current_normative['output']
+    data_dict = json.loads(current_normative['data'])
+    class SolutionSchema(colander.Schema):
+        amount = colander.SchemaNode(colander.Integer(),
+            title="Об'єм, вихід", default=int(output))
+        measurement = colander.SchemaNode(colander.String(),
+            validator=colander.OneOf([x[0] for x in (('мл','мл'), ('г','г'))]),
+            widget=deform.widget.RadioChoiceWidget(
+                values=(('мл', 'мл'), ('г', 'г')), inline=True),
+            title="Одиниця виміру", )
+        created_at = colander.SchemaNode(colander.Date(),
+           validator=colander.Range(
+           min=datetime.date(datetime.date.today().year, 1, 1),
+           min_err=("${val} раніше чим дозволено минимальну: ${min}"),),
+           title="Дата виготовлення",)
+        due_date = colander.SchemaNode(colander.Date(),
+           validator=colander.Range(
+           min=datetime.date(datetime.date.today().year, 1, 1),
+           min_err=("${val} раніше чим дозволено минимальну: ${min}"),),
+           title="Дата придатності",)
+        notes = colander.SchemaNode(colander.String(),
+            title="Примітка",
+            missing='',
+            validator=colander.Length(max=600),
+            widget=deform.widget.TextAreaWidget(rows=5, cols=60),
+            description="Необов'язково, до 600 символів з пробілами",)
+    schema = SolutionSchema().bind(request=request)
+    button = deform.form.Button(name='submit', type='submit', title="Зробити")
+    form = deform.Form(schema, buttons=(button,))
+    if 'submit' in request.POST:
+        controls = request.POST.items()
+        try:
+            appstruct = form.validate(controls)
+            created_at = appstruct['created_at']
+            due_date = appstruct['due_date']
+            notes = appstruct['notes']
+            amount = appstruct['amount']
+            measurement = appstruct['measurement']
+            coef = 1
+            if amount != output:
+                coef = amount / output
+            if isinstance(coef, decimal.Decimal):
+                coef = float(coef)
+            new_data = {
+                key: -value * coef for key, value in data_dict.items()
+            }
+            print('new_data --> ', new_data)
+            # get price and cost of each substance and insert into stock
+            for key, value in new_data.items():
+                subs_price, subs_measurement = request.dbsession.query(
+                    models.Stock.price, models.Stock.measurement).filter(
+                    models.Stock.substance_name==key).order_by(
+                    desc(models.Stock.price)).first()
+                print('price, measurement --> ', subs_price, subs_measurement)
+                subs_total_cost = round(float(subs_price) * value, 2)
+                subs_notes = f'Створено розчин {normative_name}'
+                new_stock = models.Stock(
+                    substance_name=key,
+                    measurement=subs_measurement,
+                    amount=value,
+                    price=subs_price,
+                    total_cost=subs_total_cost,
+                    notes=subs_notes
+                )
+                print('new_stock : ', new_stock)
+                request.dbsession.add(new_stock)
+                # define cost for each substance in this solution:
+                new_data[key] = subs_total_cost
+            # count price and cost of the new solution
+            solution_cost = 0
+            for cost in new_data.values():
+                solution_cost += -cost
+            print('solution_cost --> ', solution_cost)
+            solution_price = round(solution_cost / amount, 2)
+            # add to solution model
+            new_solution = models.Solution(
+                normative=normative_name,
+                measurement=measurement,
+                amount=amount,
+                price=solution_price,
+                total_cost=solution_cost,
+                created_at=created_at,
+                due_date=due_date,
+                notes=notes
+            )
+            print('new solution --> ', new_solution)
+            request.dbsession.add(new_solution)
+            next_url = request.route_url('solutions')
+            return HTTPFound(location=next_url)
+        except ValidationFailure as e:
+            return {'form': e.render(), 'normative': normative_name}
+    return {'form': form.render(), 'normative': normative_name}
 
 
 #=======================
@@ -181,13 +404,12 @@ def new_norm_next(request):
     message = ''
     name_solution = request.matchdict['name']
     output_ = request.matchdict['output']
-
     class NextFormSchema(colander.Schema):
         name = colander.SchemaNode(colander.String(), title="Назва розчину",
              default=name_solution)
-        output = colander.SchemaNode(colander.Integer(), title="Об'єм вихід в мл",
+        output = colander.SchemaNode(colander.Integer(),
+               title="Об'єм вихід в мл",
                default=int(output_))
-
         def after_bind(self, schema, kwargs):
             req = kwargs['request']
             data = req.matchdict['data']
@@ -246,13 +468,12 @@ def new_norm_next(request):
 
 
 #==================
-# RECIPES 
+# RECIPES
 @view_config(route_name="recipes", renderer='../templates/recipes.jinja2')
 def all_recipes(request):
     message = ''
     query = request.dbsession.query(models.Recipe.id, models.Recipe.name)\
             .order_by(models.Recipe.name).all()
-    print(query)
     if len(query) == 0:
         message = 'Немає доданих рецептів аналізів.'
     return dict(
@@ -261,7 +482,7 @@ def all_recipes(request):
     )
 
 
-@view_config(route_name='recipe_details', 
+@view_config(route_name='recipe_details',
              renderer='../templates/recipe_details.jinja2')
 def recipe_details(request):
     id_recipe = request.matchdict['id_recipe']
@@ -289,7 +510,7 @@ def new_recipe(request):
         message = 'Каталог реактивів пустий! Неможливо створити рецепт.'
         return {'message': message}
     substance_choices = ( (subs['id'], subs['name']) for subs in subs_list )
-    
+
     solution_query = request.dbsession.query(models.Normative).all()
     solutions = []
     if len(solution_query) > 0:
@@ -325,7 +546,7 @@ def new_recipe(request):
     return {'form': form, 'message': message}
 
 
-@view_config(route_name='new_recipe_next', 
+@view_config(route_name='new_recipe_next',
              renderer='../templates/new_recipe_next.jinja2')
 def new_recipe_next(request):
     message = ''
@@ -356,7 +577,7 @@ def new_recipe_next(request):
                                 "min": "0",
                                 "max": "999.99"
                             })
-                        )           
+                        )
             solutions = req.matchdict['solutions']
             solutions = solutions.lstrip("{'").rstrip("'}").split("', '")
             list_solut_id = [int(d) for d in solutions]
@@ -366,7 +587,7 @@ def new_recipe_next(request):
             for solut in solut_list:
                 self[solut['name'] + ', мл'] = colander.SchemaNode(
                     colander.Integer(),
-                    title=solut['name'] + ', мл', 
+                    title=solut['name'] + ', мл',
                     validator=colander.Range(1,10000)
                 )
     schema = NextRecipeSchema().bind(request=request)
@@ -381,7 +602,7 @@ def new_recipe_next(request):
             new_name = deserialized.pop('name')
             substances = {}
             solutions = {}
-            for key, value in deserialized.items():                
+            for key, value in deserialized.items():
                 if isinstance(value, decimal.Decimal):
                     substances[key] = float(value)
                 if isinstance(value, int):
@@ -403,4 +624,3 @@ def new_recipe_next(request):
         form=form.render(appstruct),
         name=name_analysis
     )
-

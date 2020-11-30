@@ -1,6 +1,7 @@
 {% extends 'layout.jinja2'  %}
 
 {% block content %}
-    <p><span class="text-danger">{{message}}</span></p>
+<h2><span class="lead">Додати нову назву в каталог реактивів (речовин, індикаторів)</span></h2>
+    <p>{{message}}</p>
     {{ form.render()|safe }}
 {% endblock %}

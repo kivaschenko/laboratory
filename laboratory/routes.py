@@ -25,8 +25,9 @@ def includeme(config):
     config.add_route('add_analysis', '/add-analysis/{id_recipe}')
 
     # stock
-    config.add_route('stock_reactives', '/stock-reactives')
-    config.add_route('buy_substances', '/buy-substances')
+    config.add_route('stock', '/stock')
+    config.add_route('buy_substance', '/buy-substance')
+    config.add_route('stock_history', '/stock-history')
     config.add_route('inventory', '/inventory')
 
     # statistic

@@ -1,0 +1,58 @@
+{% extends 'layout.jinja2' %}
+
+{% block content %}
+<div class="content">
+<h2><span class="smaller">Розчини в наявності</span><br>
+<span class="lead">реактиви, розчини приготовлені для використання</span></h2>
+<p>Нажміть на кнопку щоб роздрукувати цю сторінку або зберегти в .pdf файл 
+	<button onclick=window.print() class="btn btn-success">Друк</button></p>
+<p>{{message}}</p>
+{% if solutions %}
+<table id="recipes" class="table table-bordered" style="width:100%">
+  <thead>
+    <tr>
+      <th>Дата виготовлення</th>
+      <th>Статус</th>
+      <th>Розчин або сухий реактив)</th>
+      <th>Одиниця виміру</th>
+      <th>Кількість</th>
+      <th>Ціна, грн.</th>
+      <th>Сума, грн.</th>
+      <th>Придатний до</th>
+      <th>Примітка</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in solutions %}
+    <tr>
+      <td>{{ item['created_at'] }}</td>
+      <td>{{ item['action'] }}</td>
+      <td>{{ item['normative'] }}</td>
+			<td>{{ item['measurement'] }}</td>
+			<td>{{ item['amount'] }}</td>
+			<td>{{ item['price'] }}</td>
+			<td>{{ item['total_cost'] }}</td>
+      <td>{{ item['due_date'] }}</td>
+			<td>{{ item['notes'] }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+</div>
+<script>
+  $(document).ready(function() {
+    $('#recipes').DataTable( {
+      language: {
+          search: "Пошук по таблиці",
+          paginate: {
+            first: "Перша",
+            previous: "Попередня",
+            next: "Наступна",
+            last: "Остання"
+          },
+      }
+    } );
+  } );
+</script>
+{% endblock %}

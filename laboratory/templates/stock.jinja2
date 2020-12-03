@@ -14,7 +14,8 @@
           <th>Реактив (речовина, індикатор)</th>
           <th>Одиниця виміру</th>
           <th>Кількість</th>
-          <th>Загальна сума, грн.</th>
+          <th>Середня ціна, грн.</th>
+          <th>Загальна середня сума, грн.</th>
       </tr>
   </thead>
   <tbody>
@@ -22,7 +23,8 @@
     <tr>
       <td>{{ item['substance_name'] }}</td>
 			<td>{{ item['measurement'] }}</td>
-			<td>{{ item['total_amount'] }}</td>
+      <td>{{ item['total_amount'] }}</td>
+      <td>{{ item['avg_price'] }}</td>
 			<td>{{ item['sum_cost'] }}</td>
     </tr>
     {% endfor %}

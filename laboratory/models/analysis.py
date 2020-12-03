@@ -2,7 +2,8 @@ from sqlalchemy import (
     Column,
     Integer,
     String,
-    Date
+    Date,
+    JSON
 )
 from .meta import Base
 
@@ -11,6 +12,9 @@ class Analysis(Base):
     id = Column(Integer, primary_key=True)
     recipe_name = Column(String(255))
     done_date = Column(Date)
+    total_cost = Column(Integer)
+    substances_cost = Column(JSON)
+    solutions_cost = Column(JSON)
 
     def __repr__(self):
-        return f'<Analysis({self.recipe_name} - {self.done_date})>'   
+        return f'<Analysis({self.id} - {self.recipe_name} - {self.done_date})>'

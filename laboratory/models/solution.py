@@ -15,6 +15,7 @@ class Solution(Base):
     normative = Column(String(255))
     measurement = Column(String)
     amount = Column(Numeric(8,3))
+    remainder = Column(Numeric(11,3))
     price = Column(Numeric(8,2))
     total_cost = Column(Numeric(10,2))
     created_at = Column(Date)

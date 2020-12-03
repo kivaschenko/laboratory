@@ -1,3 +1,4 @@
+
 import json
 import decimal
 import colander
@@ -216,16 +217,28 @@ def get_aggregate_stock(request):
     textual_sql = """SELECT stock.substance_name AS substance_name,
                             stock.measurement AS measurement,
                             SUM (stock.amount) AS total_amount,
-                            SUM (stock.total_cost) AS sum_cost
+                            AVG (stock.price) AS avg_price,
+                            SUM (stock.amount) * AVG (stock.price) AS sum_cost
                             FROM stock
-                            GROUP BY stock.substance_name,
-                                stock.measurement"""
+                            GROUP BY stock.substance_name,  stock.measurement"""
     try:
         query = request.dbsession.execute(textual_sql).fetchall()
         stock_list = [q for q in query]
+        print('stock_list --> ', stock_list)
+        stock_ = []
+        for q in stock_list:
+            temp_dict = {}
+            temp_dict['substance_name'] = q['substance_name']
+            temp_dict['measurement'] = q['measurement']
+            temp_dict['total_amount'] = q['total_amount'].__float__()
+            temp_dict['avg_price'] = q['avg_price'].__floor__()
+            temp_dict['sum_cost'] = q['sum_cost'].__floor__()
+            stock_.append(temp_dict)
+        print(' stock again --> \n', stock_)
+
     except DBAPIError:
         message = db_err_msg
-    return {'stock_list': stock_list, 'message': message}
+    return {'stock_list': stock_, 'message': message}
 
 
 #=======================
@@ -294,7 +307,6 @@ def make_new_solution(request):
             new_data = {
                 key: -value * coef for key, value in data_dict.items()
             }
-            print('new_data --> ', new_data)
             # get price and cost of each substance and insert into stock
             for key, value in new_data.items():
                 subs_price, subs_measurement = request.dbsession.query(
@@ -433,13 +445,11 @@ def new_norm_next(request):
                             "max": "999.99"
                         })
                     )
-
     schema = NextFormSchema().bind(request=request)
     button = deform.form.Button(name='submit', title="Створити рецепт",
                                 type='submit')
     form = deform.Form(schema, buttons=(button,))
     appstruct = {'name': name_solution, 'output': output_}
-
     if request.method == 'POST' and 'submit' in request.POST:
         controls = request.POST.items()
         try:
@@ -510,7 +520,6 @@ def new_recipe(request):
         message = 'Каталог реактивів пустий! Неможливо створити рецепт.'
         return {'message': message}
     substance_choices = ( (subs['id'], subs['name']) for subs in subs_list )
-
     solution_query = request.dbsession.query(models.Normative).all()
     solutions = []
     if len(solution_query) > 0:
@@ -519,7 +528,6 @@ def new_recipe(request):
         message = 'Немає жодного розчину в базі даних! Створіть хоч би один.'
         return {'message': message}
     solution_choices = ( (item['id'], item['name']) for item in solutions )
-
     class RecipeSchema(colander.Schema):
         name = colander.SchemaNode(colander.String(), title='Назва аналізу',
             description='введіть унікальну назву аналізу')
@@ -529,11 +537,9 @@ def new_recipe(request):
         solutions = colander.SchemaNode(colander.Set(), title='Розчини',
             description='виберіть потрібні розчини',
             widget=deform.widget.CheckboxChoiceWidget(values=solution_choices))
-
     schema = RecipeSchema().bind(request=request)
     button = deform.form.Button(name='submit', title='Далі', type='submit')
     form = deform.Form(schema, buttons=(button,), autocomplete='off')
-
     if 'submit' in request.POST:
         controls = request.POST.items()
         try:
@@ -542,7 +548,6 @@ def new_recipe(request):
             return HTTPFound(location=next_url)
         except ValidationFailure as e:
             return {'form': e, 'message': message}
-
     return {'form': form, 'message': message}
 
 
@@ -624,3 +629,34 @@ def new_recipe_next(request):
         form=form.render(appstruct),
         name=name_analysis
     )
+
+#==============================
+# ANALYSIS
+@view_config(route_name='add_analysis',
+             renderer='../templates/add_analysis.jinja2')
+def add_done_analysis(request):
+    message = ''
+    id_recipe = request.matchdict['id_recipe']
+    recipe = request.dbsession.query(models.Recipe).get(id_recipe)
+    recipe_name = recipe.name
+    substances = json.loads(recipe.substances)
+    solutions = json.loads(recipe.solutions)
+    print(substances, solutions)
+    class AddAnalysisSchema(colander.Schema):
+        done_date = colander.SchemaNode(colander.Date(),
+            title="Дата виконання")
+        quantity = colander.SchemaNode(colander.Integer(),
+            title="кількість виконаних досліджень", default=1)
+    schema = AddAnalysisSchema().bind(request=request)
+    button = deform.form.Button(name='submit', type='submit', title='Записати')
+    form = deform.Form(schema, buttons=(button,))
+    if 'submit' in request.POST:
+        controls = request.POST.items()
+        try:
+            appstruct = form.validate(controls)
+            done_date = appstruct['done_date']
+            quantity = appstruct['quantity']
+
+        except ValidationFailure as e:
+            return {'form': e.render(), 'message': message, 'recipe': recipe}
+    return {'message': message, 'recipe': recipe, 'form': form.render()}

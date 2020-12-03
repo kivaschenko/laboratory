@@ -15,9 +15,10 @@ class Stock(Base):
     id = Column(Integer, primary_key=True)
     substance_name = Column(String(255), nullable=False)
     measurement = Column(String(10), nullable=False)
-    amount = Column(Numeric(8,3), nullable=False)
-    price = Column(Numeric(8,2), nullable=False)
-    total_cost = Column(Numeric(10,2), nullable=False)
+    amount = Column(Numeric(11,3), nullable=False)
+    remainder = Column(Numeric(11,3))
+    price = Column(Numeric(10,2), nullable=False)
+    total_cost = Column(Numeric(11,2), nullable=False)
     creation_date = Column(DateTime)
     notes = Column(Text, nullable=True)
 

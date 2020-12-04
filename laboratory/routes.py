@@ -17,7 +17,7 @@ def includeme(config):
 
     # recipe and analysis
     config.add_route('new_recipe', '/new-recipe')
-    config.add_route('new_recipe_next', 
+    config.add_route('new_recipe_next',
                      '/new-recipe-next/{name}/{solutions}/{substances}')
     config.add_route('recipes', '/recipes')
     config.add_route('recipe_details', '/resipe-details/{id_recipe}')

@@ -1,9 +1,9 @@
-
 import json
 import decimal
 import colander
 import deform
 import datetime
+import pandas as pd
 from deform.exception import ValidationFailure
 from pyramid.view import view_config
 from pyramid.response import Response
@@ -170,11 +170,19 @@ def input_substance(request):
             amount = float(appstruct['amount'])
             price = float(appstruct['price'])
             total_cost = round(price * amount, 2)
-            notes = appstruct['notes']
+            notes = 'Приход на склад. ' + str(appstruct['notes'])
+            last_remainder = 0
+            subs_ = request.dbsession.query(models.Stock.remainder).\
+                       filter(models.Stock.substance_name==substance_name).\
+                       order_by(desc(models.Stock.creation_date)).first()
+            print('subs_ -->', subs_)
+            if subs_ is not None:
+                last_remainder += subs_[0].__float__()
             new_stock = models.Stock(
                 substance_name=substance_name,
                 measurement=measurement,
                 amount=amount,
+                remainder=last_remainder + amount,
                 price=price,
                 total_cost=total_cost,
                 notes=notes
@@ -210,6 +218,7 @@ def stock_all_parties(request):
     )
 
 
+
 @view_config(route_name='stock', renderer='.//templates/stock.jinja2')
 def get_aggregate_stock(request):
     message = ''
@@ -224,18 +233,15 @@ def get_aggregate_stock(request):
     try:
         query = request.dbsession.execute(textual_sql).fetchall()
         stock_list = [q for q in query]
-        print('stock_list --> ', stock_list)
         stock_ = []
         for q in stock_list:
             temp_dict = {}
             temp_dict['substance_name'] = q['substance_name']
             temp_dict['measurement'] = q['measurement']
             temp_dict['total_amount'] = q['total_amount'].__float__()
-            temp_dict['avg_price'] = q['avg_price'].__floor__()
+            temp_dict['avg_price'] = q['avg_price'].__float__()
             temp_dict['sum_cost'] = q['sum_cost'].__floor__()
             stock_.append(temp_dict)
-        print(' stock again --> \n', stock_)
-
     except DBAPIError:
         message = db_err_msg
     return {'stock_list': stock_, 'message': message}
@@ -246,17 +252,18 @@ def get_aggregate_stock(request):
 
 @view_config(route_name='solutions', renderer='../templates/solutions.jinja2')
 def list_solutions(request):
-    query = request.dbsession.query(models.Solution).all()
+    query = request.dbsession.query(models.Solution).\
+          filter(text("remainder > 0")).all()
     solutions = []
     if len(query) > 0:
         solutions = [q.__dict__ for q in query]
-    print('solutions --> ', solutions)
     return {"solutions": solutions}
 
 
 @view_config(route_name='create_solution',
              renderer='../templates/create_solution.jinja2')
 def make_new_solution(request):
+    message = ''
     normative_name = request.matchdict['normative']
     current_normative = request.dbsession.query(models.Normative).\
         filter(models.Normative.name==normative_name).first()
@@ -274,16 +281,20 @@ def make_new_solution(request):
         created_at = colander.SchemaNode(colander.Date(),
            validator=colander.Range(
            min=datetime.date(datetime.date.today().year, 1, 1),
-           min_err=("${val} раніше чим дозволено минимальну: ${min}"),),
-           title="Дата виготовлення",)
+           min_err=("${val} раніше чим дозволено мінімальну: ${min}"),),
+           title="Дата виготовлення",
+           default=datetime.date.today(),
+           )
         due_date = colander.SchemaNode(colander.Date(),
            validator=colander.Range(
            min=datetime.date(datetime.date.today().year, 1, 1),
            min_err=("${val} раніше чим дозволено минимальну: ${min}"),),
-           title="Дата придатності",)
+           title="Дата придатності",
+           default=datetime.date.today() + datetime.timedelta(days=15)
+           )
         notes = colander.SchemaNode(colander.String(),
             title="Примітка",
-            missing='',
+            missing='', default='Створено новий розчин',
             validator=colander.Length(max=600),
             widget=deform.widget.TextAreaWidget(rows=5, cols=60),
             description="Необов'язково, до 600 символів з пробілами",)
@@ -307,45 +318,68 @@ def make_new_solution(request):
             new_data = {
                 key: -value * coef for key, value in data_dict.items()
             }
-            # get price and cost of each substance and insert into stock
+            substances_from_data = list(new_data.keys())
+            query_stock = request.dbsession.query(models.Stock).\
+                        filter(models.Stock.substance_name.in_(
+                        substances_from_data)).all()
+            if len(query_stock) == 0:
+                message = f'На складі відсутні всі компоненти!'
+                return {'form': form.render(appstruct), 'message': message,
+                        'normative': normative_name}
+            else:
+                substances_dicts = [qs.__dict__ for qs in query_stock]
+                df = pd.DataFrame.from_records(substances_dicts)
+            # check keys in df:
+            needing_substances = set(new_data.keys())
+            given_substances = df['substance_name'].unique().tolist()
+            given_substances = set(given_substances)
+            missing = needing_substances - given_substances
+            if len(missing) > 0:
+                missing_string = ' '.join(missing)
+                message = f'Відсутні залишки: {missing_string}'
+                return {'form': form.render(appstruct), 'message': message}
+            new_records = []
             for key, value in new_data.items():
-                subs_price, subs_measurement = request.dbsession.query(
-                    models.Stock.price, models.Stock.measurement).filter(
-                    models.Stock.substance_name==key).order_by(
-                    desc(models.Stock.price)).first()
-                print('price, measurement --> ', subs_price, subs_measurement)
-                subs_total_cost = round(float(subs_price) * value, 2)
+                df_key = df[df.substance_name==key]
+                subs_measurement = df_key['measurement'].values[0]
+                sum_remainder = df_key['amount'].sum()
+                sum_remainder = sum_remainder.__float__()
+                new_remainder = sum_remainder + value
+                subs_price = ((df_key['price'] * df_key['remainder'])) / df_key['remainder'].sum()
+                subs_price = subs_price.values[0].__float__()
+                subs_total_cost = subs_price * value
                 subs_notes = f'Створено розчин {normative_name}'
                 new_stock = models.Stock(
                     substance_name=key,
                     measurement=subs_measurement,
                     amount=value,
+                    remainder=new_remainder,
                     price=subs_price,
                     total_cost=subs_total_cost,
                     notes=subs_notes
                 )
-                print('new_stock : ', new_stock)
-                request.dbsession.add(new_stock)
+                new_records.append(new_stock)
                 # define cost for each substance in this solution:
                 new_data[key] = subs_total_cost
+            for record in new_records:
+                request.dbsession.add(record)
             # count price and cost of the new solution
             solution_cost = 0
             for cost in new_data.values():
                 solution_cost += -cost
-            print('solution_cost --> ', solution_cost)
             solution_price = round(solution_cost / amount, 2)
             # add to solution model
             new_solution = models.Solution(
                 normative=normative_name,
                 measurement=measurement,
                 amount=amount,
+                remainder=amount,
                 price=solution_price,
                 total_cost=solution_cost,
                 created_at=created_at,
                 due_date=due_date,
                 notes=notes
             )
-            print('new solution --> ', new_solution)
             request.dbsession.add(new_solution)
             next_url = request.route_url('solutions')
             return HTTPFound(location=next_url)
@@ -641,10 +675,12 @@ def add_done_analysis(request):
     recipe_name = recipe.name
     substances = json.loads(recipe.substances)
     solutions = json.loads(recipe.solutions)
-    print(substances, solutions)
     class AddAnalysisSchema(colander.Schema):
         done_date = colander.SchemaNode(colander.Date(),
-            title="Дата виконання")
+            title="Дата виконання", validator=colander.Range(
+            min=datetime.date(datetime.date.today().year, 1, 1),
+            min_err=("${val} раніше чим дозволено мінімальну: ${min}"),),
+            )
         quantity = colander.SchemaNode(colander.Integer(),
             title="кількість виконаних досліджень", default=1)
     schema = AddAnalysisSchema().bind(request=request)

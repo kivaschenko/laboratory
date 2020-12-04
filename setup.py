@@ -23,7 +23,9 @@ requires = [
     # new
     'psycopg2',
     'deform',
-    'bcrypt'
+    'bcrypt',
+    'pandas',
+    'numpy==1.19.3'
 ]
 
 tests_require = [

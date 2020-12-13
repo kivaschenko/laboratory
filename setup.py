@@ -25,7 +25,8 @@ requires = [
     'deform',
     'bcrypt',
     'pandas',
-    'numpy==1.19.3'
+    'numpy==1.19.3',
+    'bokeh==2.2.3'
 ]
 
 tests_require = [

@@ -21,10 +21,12 @@ class Stock(Base):
     total_cost = Column(Numeric, nullable=False)
     creation_date = Column(DateTime)
     notes = Column(Text, nullable=True)
+    normative = Column(String(255), nullable=True)
+    recipe = Column(String(255), nullable=True)
 
     def __repr__(self):
-        return f'<Stock(id={self.id} {self.substance_name} amount: \
-{self.amount} {self.measurement} price: {self.price} UAH from {self.creation_date})>'
+        return f'<Stock(id={self.id} {self.substance_name} \
+amount: {self.amount} price: {self.price} {self.creation_date})>'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

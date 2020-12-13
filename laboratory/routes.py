@@ -14,6 +14,7 @@ def includeme(config):
     config.add_route('normative_list', '/normatives')
     config.add_route('solutions', '/solutions')
     config.add_route('create_solution', '/create_solution/{normative}')
+    config.add_route('aggregate_solution', '/aggregate-solution')
 
     # recipe and analysis
     config.add_route('new_recipe', '/new-recipe')

@@ -9,7 +9,7 @@ from .meta import Base
 
 
 class User(Base):
-    __tablename__ = 'user'
+    __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     nickname = Column(String(50), nullable=False)
     email = Column(String(50), nullable=False)

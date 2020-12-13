@@ -2,8 +2,8 @@
 body {
   font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-weight: 400;
-  color: #4C4C4C;
-  background: #ffffff;
+  color: #8AC53F ;
+  background: #4C4C4C;
 }
 h1,
 h2,
@@ -45,7 +45,10 @@ p {
   color: #8AC53F;
 }
 .starter-template .content .lead .font-normal {
-  color: #4C4C4C;
+  color: #fff;
+}
+.starter-template .content .font-semi-bold {
+  color: #fff;
 }
 .starter-template .links {
   float: right;
@@ -58,8 +61,8 @@ p {
   margin: 0;
 }
 .starter-template .links ul li {
-  list-style: none;
-  display: inline;
+  list-style:none;
+  display:block;
   margin: 0 10px;
 }
 .starter-template .links ul li:first-child {
@@ -77,7 +80,7 @@ p {
   text-decoration: underline;
 }
 .starter-template .links ul li a:hover, a:hover {
-  color: #4C4C4C;
+  color: #fff;
   text-decoration: underline;
 }
 .starter-template .links ul li .icon-muted {
@@ -85,7 +88,7 @@ p {
   margin-right: 5px;
 }
 .starter-template .links ul li:hover .icon-muted {
-  color: #4C4C4C;
+  color: #fff;
 }
 .starter-template .copyright {
   margin-top: 10px;
@@ -111,7 +114,8 @@ p {
     margin-top: 0;
   }
   .starter-template .logo {
-    margin: 40px auto;
+    margin: 20px auto;
+    background-color: #4C4C4C;
   }
   .starter-template .content {
     margin-left: 0;
@@ -123,7 +127,7 @@ p {
   .starter-template .links {
     float: none;
     text-align: center;
-    margin-top: 60px;
+    margin-top: 40px;
   }
   .starter-template .copyright {
     float: none;
@@ -157,4 +161,17 @@ p {
     margin-top: 40px;
     padding: 0;
     list-style: none;
+}
+
+.glyphicon {
+    position: relative;
+    top: 1px;
+    display: block;
+    font-family: 'Glyphicons Halflings';
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1;
+    color: limegreen;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }

@@ -1,11 +1,11 @@
 import argparse
 import sys
-
+import json
 from pyramid.paster import bootstrap, setup_logging
 from sqlalchemy.exc import OperationalError
 
 from .. import models
-from .db_seed import substances
+from .db_seed import substances, normatives
 
 def setup_models(dbsession):
     """
@@ -16,7 +16,13 @@ def setup_models(dbsession):
         new_subst = models.substance.Substance(name = subst[0], 
             measurement = subst[1])
         dbsession.add(new_subst)
-    
+    for norm in normatives:
+        new_normative = models.normative.Normative(
+            name=norm[0],
+            output=norm[1],
+            data=json.dumps(norm[2])
+        )
+        dbsession.add(new_normative)
     oksana = models.user.User(nickname='oksana', role='editor',
         email='o.v.ivaschenko@gmail.com')
     oksana.set_password('Teodor235813')

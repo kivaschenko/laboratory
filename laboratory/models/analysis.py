@@ -11,6 +11,7 @@ class Analysis(Base):
     __tablename__ = 'analysis'
     id = Column(Integer, primary_key=True)
     recipe_name = Column(String(255))
+    quantity = Column(Integer)
     done_date = Column(Date)
     total_cost = Column(Integer)
     substances_cost = Column(JSON)

@@ -3,8 +3,16 @@ import decimal
 import colander
 import deform
 import datetime
+from math import pi 
+
 import pandas as pd
+from bokeh.palettes import viridis, inferno
+from bokeh.plotting import figure
+from bokeh.transform import cumsum, dodge
+from bokeh.models import ColumnDataSource
+from bokeh.embed import components
 from deform.exception import ValidationFailure
+
 from pyramid.view import view_config
 from pyramid.response import Response
 from pyramid.httpexceptions import HTTPFound
@@ -64,6 +72,11 @@ def new_substance(request):
         controls = request.POST.items()
         try:
             appstruct = form.validate(controls)
+            certain_name = appstruct['name']
+            check_query = request.dbsession.query(models.Substance).\
+                        filter(models.Substance.name==certain_name).all()
+            if len(check_query) > 0:
+                return {'message': 'Така назва вже існує!', 'form': form}
             new_substance = models.Substance(
                 name=appstruct['name'],
                 measurement=appstruct['measurement']
@@ -175,7 +188,6 @@ def input_substance(request):
             subs_ = request.dbsession.query(models.Stock.remainder).\
                        filter(models.Stock.substance_name==substance_name).\
                        order_by(desc(models.Stock.creation_date)).first()
-            print('subs_ -->', subs_)
             if subs_ is not None:
                 last_remainder += subs_[0].__float__()
             new_stock = models.Stock(
@@ -218,18 +230,18 @@ def stock_all_parties(request):
     )
 
 
-
 @view_config(route_name='stock', renderer='.//templates/stock.jinja2')
 def get_aggregate_stock(request):
     message = ''
     stock_list = []
-    textual_sql = """SELECT stock.substance_name AS substance_name,
-                            stock.measurement AS measurement,
-                            SUM (stock.amount) AS total_amount,
-                            AVG (stock.price) AS avg_price,
-                            SUM (stock.amount) * AVG (stock.price) AS sum_cost
-                            FROM stock
-                            GROUP BY stock.substance_name,  stock.measurement"""
+    textual_sql = """
+        SELECT stock.substance_name AS substance_name,
+        stock.measurement AS measurement,
+        SUM (stock.amount) AS total_amount,
+        AVG (stock.price) AS avg_price,
+        SUM (stock.amount) * AVG (stock.price) AS sum_cost
+        FROM stock
+        GROUP BY stock.substance_name,  stock.measurement"""
     try:
         query = request.dbsession.execute(textual_sql).fetchall()
         stock_list = [q for q in query]
@@ -249,11 +261,40 @@ def get_aggregate_stock(request):
 
 #=======================
 # SOLUTIONS
+@view_config(route_name='aggregate_solution', 
+             renderer='../templates/aggregate_solution.jinja2')
+def agregate_solution_remainder(request):
+    message = ''
+    solutions = []
+    textual_sql = """
+        SELECT solutions.normative AS normative,
+        solutions.measurement AS measurement,
+        SUM (solutions.amount) AS total_amount,
+        AVG (solutions.price) AS avg_price,
+        SUM (solutions.amount) * AVG (solutions.price) AS sum_cost
+        FROM solutions
+        GROUP BY solutions.normative, solutions.measurement"""
+    try:
+        query = request.dbsession.execute(textual_sql).fetchall()
+        solutions = [q for q in query]
+        solutions_cleaned = []
+        for sol in solutions:
+            temp_dict = {}
+            temp_dict['normative'] = sol['normative']
+            temp_dict['measurement'] = sol['measurement']
+            temp_dict['total_amount'] = sol['total_amount'].__float__()
+            temp_dict['avg_price'] = sol['avg_price'].__float__()
+            temp_dict['sum_cost'] = sol['sum_cost'].__floor__()
+            solutions_cleaned.append(temp_dict)
+    except DBAPIError:
+        message = db_err_msg
+    return {'solutions': solutions_cleaned, 'message': message}
+
 
 @view_config(route_name='solutions', renderer='../templates/solutions.jinja2')
 def list_solutions(request):
-    query = request.dbsession.query(models.Solution).\
-          filter(text("remainder > 0")).all()
+    query = request.dbsession.query(models.Solution).all()
+          # filter(text("remainder > 0")).\
     solutions = []
     if len(query) > 0:
         solutions = [q.__dict__ for q in query]
@@ -337,7 +378,8 @@ def make_new_solution(request):
             if len(missing) > 0:
                 missing_string = ' '.join(missing)
                 message = f'Відсутні залишки: {missing_string}'
-                return {'form': form.render(appstruct), 'message': message}
+                return {'form': form.render(appstruct), 'message': message, 
+                        'normative': normative_name}
             new_records = []
             for key, value in new_data.items():
                 df_key = df[df.substance_name==key]
@@ -345,8 +387,8 @@ def make_new_solution(request):
                 sum_remainder = df_key['amount'].sum()
                 sum_remainder = sum_remainder.__float__()
                 new_remainder = sum_remainder + value
-                subs_price = ((df_key['price'] * df_key['remainder'])) / df_key['remainder'].sum()
-                subs_price = subs_price.values[0].__float__()
+                subs_price = df_key['total_cost'].sum() / df_key['amount'].sum()
+                subs_price = subs_price.__float__()
                 subs_total_cost = subs_price * value
                 subs_notes = f'Створено розчин {normative_name}'
                 new_stock = models.Stock(
@@ -356,7 +398,8 @@ def make_new_solution(request):
                     remainder=new_remainder,
                     price=subs_price,
                     total_cost=subs_total_cost,
-                    notes=subs_notes
+                    notes=subs_notes,
+                    normative=normative_name
                 )
                 new_records.append(new_stock)
                 # define cost for each substance in this solution:
@@ -368,12 +411,18 @@ def make_new_solution(request):
             for cost in new_data.values():
                 solution_cost += -cost
             solution_price = round(solution_cost / amount, 2)
+            last_remainder = 0
+            get_remainder = request.dbsession.query(models.Solution.remainder).\
+                          filter(models.Solution.normative==normative_name).\
+                          order_by(desc(models.Solution.created_at)).first()
+            if get_remainder is not None:
+                last_remainder += get_remainder[0].__float__()
             # add to solution model
             new_solution = models.Solution(
                 normative=normative_name,
                 measurement=measurement,
                 amount=amount,
-                remainder=amount,
+                remainder=last_remainder + amount,
                 price=solution_price,
                 total_cost=solution_cost,
                 created_at=created_at,
@@ -409,6 +458,7 @@ def get_all_normatives(request):
         normative_list=normative_list
         )
 
+
 @view_config(route_name='new_normative',
              renderer='../templates/new_normative.jinja2')
 def new_normative(request):
@@ -437,6 +487,11 @@ def new_normative(request):
         controls = request.POST.items()
         try:
             appstruct = form.validate(controls)
+            certain_name = appstruct['name']
+            check_query = request.dbsession.query(models.Normative).\
+                        filter(models.Normative.name==certain_name).all()
+            if len(check_query) > 0:
+                return {'message': 'Така назва вже існує!', 'form': form}
             next_url = request.route_url('new_norm_next', **appstruct)
             return HTTPFound(location=next_url)
         except ValidationFailure as e:
@@ -467,16 +522,16 @@ def new_norm_next(request):
             for subs in subs_list:
                 self[subs['name']] = colander.SchemaNode(colander.Decimal(),
                     title=subs["name"] + ', '+subs["measurement"],
-                    default=0.01,
+                    default=0.001,
                     validator=colander.Range(min=0,
-                            max=decimal.Decimal("999.99")),
+                            max=decimal.Decimal("999.999")),
                     widget=deform.widget.TextInputWidget(
                         attributes={
                             "type": "number",
                             "inputmode": "decimal",
-                            "step": "0.01",
+                            "step": "0.001",
                             "min": "0",
-                            "max": "999.99"
+                            "max": "999.999"
                         })
                     )
     schema = NextFormSchema().bind(request=request)
@@ -553,7 +608,7 @@ def new_recipe(request):
     else:
         message = 'Каталог реактивів пустий! Неможливо створити рецепт.'
         return {'message': message}
-    substance_choices = ( (subs['id'], subs['name']) for subs in subs_list )
+    substance_choices = ((subs['id'], subs['name']) for subs in subs_list)
     solution_query = request.dbsession.query(models.Normative).all()
     solutions = []
     if len(solution_query) > 0:
@@ -578,6 +633,12 @@ def new_recipe(request):
         controls = request.POST.items()
         try:
             appstruct = form.validate(controls)
+            certain_name = appstruct['name']
+            check_query = request.dbsession.query(models.Recipe.name).\
+                        filter(models.Recipe.name==certain_name).all()
+            if len(check_query) > 0:
+                return {'message': 'Така назва аналізу вже існує!',
+                        'form': form}
             next_url = request.route_url('new_recipe_next', **appstruct)
             return HTTPFound(location=next_url)
         except ValidationFailure as e:
@@ -601,22 +662,19 @@ def new_recipe_next(request):
                        .filter(models.Substance.id.in_(list_subs_id)).all()
             subs_list = [sq.__dict__ for sq in subs_query]
             for subs in subs_list:
-                self[subs['name'] + ', '+subs["measurement"]] = \
-                    colander.SchemaNode(
-                        colander.Decimal(),
-                        title=subs["name"] + ', '+subs["measurement"],
-                        default=0.01,
-                        validator=colander.Range(min=0,
-                                max=decimal.Decimal("999.99")),
-                        widget=deform.widget.TextInputWidget(
-                            attributes={
-                                "type": "number",
-                                "inputmode": "decimal",
-                                "step": "0.01",
-                                "min": "0",
-                                "max": "999.99"
-                            })
-                        )
+                self[subs['name']] = colander.SchemaNode(
+                    colander.Decimal(),
+                    title=subs["name"] + ', ' + subs["measurement"], 
+                    default=0.001, 
+                    validator=colander.Range(min=0, max=decimal.Decimal("999.999")),
+                    widget=deform.widget.TextInputWidget(attributes={
+                        "type": "number",
+                        "inputmode": "decimal", 
+                        "step": "0.001", 
+                        "min": "0",
+                        "max": "999.999"
+                    })
+                )
             solutions = req.matchdict['solutions']
             solutions = solutions.lstrip("{'").rstrip("'}").split("', '")
             list_solut_id = [int(d) for d in solutions]
@@ -624,45 +682,56 @@ def new_recipe_next(request):
                         .filter(models.Normative.id.in_(list_solut_id)).all()
             solut_list = [st.__dict__ for st in solut_query]
             for solut in solut_list:
-                self[solut['name'] + ', мл'] = colander.SchemaNode(
-                    colander.Integer(),
-                    title=solut['name'] + ', мл',
-                    validator=colander.Range(1,10000)
+                self[solut['name']] = colander.SchemaNode(
+                    colander.Decimal(),
+                    title=solut['name'] + ', мл', 
+                    default=0.001,
+                    validator=colander.Range(min=0, max=decimal.Decimal("999.999")),
+                    widget=deform.widget.TextInputWidget(attributes={
+                        "type": "number",
+                        "inputmode": "decimal",
+                        "step": "0.001",
+                        "min": "0",
+                        "max": "999.999"
+                    })
                 )
     schema = NextRecipeSchema().bind(request=request)
-    button = deform.form.Button(name='submit', title='Створити новий аналіз',
-                                type='submit')
+    button = deform.form.Button(name='submit', title='Створити новий аналіз', type='submit')
     form = deform.Form(schema, buttons=(button,))
     appstruct = {'name': name_analysis}
+    subst_names = [s[0] for s in request.dbsession.query(models.Substance.name).all()]
     if 'submit' in request.POST:
         controls = request.POST.items()
         try:
             deserialized = form.validate(controls)
             new_name = deserialized.pop('name')
+            deserialized_keys = [i for i in deserialized.keys()]
+            subst_here = set(subst_names) & set(deserialized_keys)
             substances = {}
             solutions = {}
             for key, value in deserialized.items():
-                if isinstance(value, decimal.Decimal):
+                if key in subst_here:
                     substances[key] = float(value)
-                if isinstance(value, int):
-                    solutions[key] = value
+                else:
+                    solutions[key] = float(value)
             substances = json.dumps(substances)
             solutions = json.dumps(solutions)
             new_recipe = models.Recipe(
-                name=new_name,
-                substances=substances,
-                solutions=solutions
-            )
-            recipe = request.dbsession.add(new_recipe)
+                                name=new_name,
+                                substances=substances,
+                                solutions=solutions
+                                )
+            request.dbsession.add(new_recipe)
             next_url = request.route_url('recipes')
             return HTTPFound(location=next_url)
         except ValidationFailure as e:
-            return {'form': e.render()}
+            return {'form': e.render(), 'message': 'Перевірте поля форми'}
     return dict(
         message=message,
         form=form.render(appstruct),
         name=name_analysis
     )
+
 
 #==============================
 # ANALYSIS
@@ -680,7 +749,7 @@ def add_done_analysis(request):
             title="Дата виконання", validator=colander.Range(
             min=datetime.date(datetime.date.today().year, 1, 1),
             min_err=("${val} раніше чим дозволено мінімальну: ${min}"),),
-            )
+            default=datetime.date.today())
         quantity = colander.SchemaNode(colander.Integer(),
             title="кількість виконаних досліджень", default=1)
     schema = AddAnalysisSchema().bind(request=request)
@@ -692,7 +761,228 @@ def add_done_analysis(request):
             appstruct = form.validate(controls)
             done_date = appstruct['done_date']
             quantity = appstruct['quantity']
-
+            subsbstances_quantity = {
+                key: -value * quantity for key, value in substances.items()
+            }
+            substances_names = list(substances.keys())
+            # check remainders
+            query_stock = request.dbsession.query(models.Stock).\
+                        filter(models.Stock.substance_name.in_(
+                        substances_names)).all()
+            if len(query_stock) == 0:
+                message = f'На складі відсутні речовини!'
+                return {'form': form.render(appstruct), 'message': message,
+                        'recipe': recipe}
+            else:
+                query_stock_dicts = [qs.__dict__ for qs in query_stock]
+                df = pd.DataFrame.from_records(query_stock_dicts)
+            got_substances = df['substance_name'].unique().tolist()
+            missing = set(substances_names) - set(got_substances)
+            if len(missing) > 0:
+                missing_string = ' '.join(missing)
+                message = f'Відсутні залишки: {missing_string}'
+                return {'form': form.render(appstruct), 'message': message,
+                        'recipe': recipe}
+            # list for collect instances of class Stock: to_insert_into_stock
+            insert_into_stock = []
+            substances_cost = {}
+            for key, value in subsbstances_quantity.items():
+                df_key = df[df.substance_name==key]
+                subs_measurement = df_key['measurement'].values[0]
+                sum_remainder = df_key['amount'].sum()
+                sum_remainder = sum_remainder.__float__()
+                new_remainder = sum_remainder + value
+                avg_price = df_key['total_cost'].sum() / df_key['amount'].sum()
+                avg_price = avg_price.__float__()
+                subs_total_cost = avg_price * value
+                subs_notes = f'Аналіз {recipe_name} в кількості: {quantity}'
+                new_stock = models.Stock(
+                    substance_name=key,
+                    measurement=subs_measurement,
+                    amount=value,
+                    remainder=new_remainder,
+                    price=avg_price,
+                    total_cost=subs_total_cost,
+                    notes=subs_notes,
+                    recipe=recipe_name
+                )
+                insert_into_stock.append(new_stock)
+                substances_cost[key] = subs_total_cost
+            solutions_quantity = {
+                key: -value * quantity for key, value in solutions.items() 
+            }
+            solutions_names = list(solutions.keys())
+            query_solutions = request.dbsession.query(models.Solution).\
+                            filter(models.Solution.normative.in_(
+                            solutions_names)).all()
+            if len(query_solutions) == 0:
+                message = f'Немає готових розчинів для цього аналізу.'
+                return {'form': form.render(appstruct), 'message': message,
+                        'recipe': recipe}
+            else:
+                query_solutions_dicts = [qs.__dict__ for qs in query_solutions]
+                df2 = pd.DataFrame.from_records(query_solutions_dicts)
+            got_solutions = df2['normative'].unique().tolist()
+            missing = set(solutions_names) - set(got_solutions)
+            if len(missing) > 0:
+                missing_string = ' '.join(missing)
+                message = f'Відсутні залишки: {missing_string}'
+                return {'form': form.render(appstruct), 'message': message,
+                        'recipe': recipe}
+            insert_into_solutions = []
+            solutions_cost = {}
+            for key, value in solutions_quantity.items():
+                df2_key = df2[df2.normative==key]
+                sol_measurement = df2_key['measurement'].values[0]
+                sol_remainder = df2_key['amount'].sum()
+                sol_remainder = sol_remainder.__float__()
+                new_remainder = sol_remainder + value
+                avg_price = df2_key['total_cost'].sum() / df2_key['amount'].sum()
+                avg_price = avg_price.__float__()
+                sol_total_cost = avg_price * value
+                sol_notes = f'Аналіз {recipe_name} в кількості: {quantity}'
+                new_solution = models.Solution(
+                    normative=key,
+                    measurement=sol_measurement,
+                    amount=value,
+                    remainder=new_remainder,
+                    price=avg_price,
+                    total_cost=sol_total_cost,
+                    created_at=datetime.date.today(),
+                    notes=sol_notes,
+                    recipe=recipe_name
+                )
+                insert_into_solutions.append(new_solution)
+                solutions_cost[key] = sol_total_cost
+            total_substances_cost = [v for v in substances_cost.values()]
+            total_substances_cost = sum(total_substances_cost) * -1
+            total_solutions_cost = [v for v in solutions_cost.values()]
+            total_solutions_cost = sum(total_solutions_cost) * -1
+            this_analysis = models.Analysis(
+                recipe_name=recipe_name,
+                quantity=quantity,
+                done_date=done_date,
+                total_cost=total_substances_cost + total_solutions_cost,
+                substances_cost=json.dumps(substances_cost),
+                solutions_cost=json.dumps(solutions_cost)
+            )
+            request.dbsession.add(this_analysis)
+            for stock in insert_into_stock:
+                request.dbsession.add(stock)
+            for sol in insert_into_solutions:
+                request.dbsession.add(sol)
+            next_url = request.route_url('analysis_done')
+            return HTTPFound(location=next_url)
         except ValidationFailure as e:
             return {'form': e.render(), 'message': message, 'recipe': recipe}
     return {'message': message, 'recipe': recipe, 'form': form.render()}
+
+
+@view_config(route_name='analysis_done', 
+             renderer='../templates/analysis_done.jinja2')
+def analysis_history(request):
+    message = ''
+    analysises = []
+    try:
+        query = request.dbsession.query(models.Analysis).all()
+        analysises = [q.__dict__ for q in query]
+    except DBAPIError:
+        message = db_err_msg
+    return {'analysises': analysises, 'massage': message}
+
+#===========================
+# STATISTIC
+@view_config(route_name='statistic', renderer='../templates/statistic_form.jinja2')
+def statistic_form(request):
+    message = ''
+    substances = []
+    pie_script = ''
+    pie_div = ''
+    today = datetime.date.today()
+    class StatisticSchema(colander.Schema):
+        begin_date = colander.SchemaNode(colander.Date(), title="Початок періоду", 
+                   default=today)
+        end_date = colander.SchemaNode(colander.Date(), title='Кінець періоду',
+                 default=today)
+    schema = StatisticSchema().bind(request=request)
+    button = deform.form.Button(type='submit', name='submit', title='Вибрати')
+    form = deform.Form(schema, buttons=(button,))
+    if 'submit' in request.POST:
+        controls = request.POST.items()
+        try:
+            appstruct = form.validate(controls)
+            start = appstruct['begin_date']
+            end = appstruct['end_date']
+            subst_text_sql = '''SELECT stock.substance_name AS subs_name,
+                stock.measurement AS subs_measure,
+                SUM (stock.amount) * -1 AS total_amount,
+                SUM (total_cost) * -1 AS costs 
+                FROM stock
+                WHERE stock.creation_date BETWEEN :x AND :y AND stock.amount < 0
+                GROUP BY stock.substance_name, stock.measurement
+                ORDER BY costs DESC'''
+            subs_query = request.dbsession.execute(
+                       subst_text_sql, {'x': start, 'y': end}).fetchall()
+            df_subs = pd.DataFrame.from_records(subs_query, coerce_float=True,
+                columns=['subs_name', 'subs_measure', 'total_amount', 'costs'])
+            subs_total_cost = df_subs['costs'].sum()
+            # plot pie chart
+            df_subs['angle'] = df_subs['costs']/df_subs['costs'].sum() * 2*pi
+            num_colors = df_subs.shape[0]
+            df_subs['color'] = viridis(num_colors)
+            source = ColumnDataSource(data=df_subs)
+            pieplot = figure(
+                plot_height=400, sizing_mode="scale_both",
+                title='Частки витрат речовин, грн.', toolbar_location=None, 
+                tools='hover', tooltips="@subs_name: @costs" + " грн.",
+                x_range=(-0.5, 1.0)
+            )
+            pieplot.wedge(x=0, y=1, radius=0.4, line_color="white",
+                           start_angle=cumsum('angle', include_zero=True),
+                           end_angle=cumsum('angle'), fill_color='color',
+                           legend_field='subs_name', source=source)
+            pieplot.axis.axis_label=None
+            pieplot.axis.visible=False
+            pieplot.grid.grid_line_color=None
+            pie_script, pie_div = components(pieplot)
+            # analysis horizontal bar and table
+            analysis_sql = '''SELECT analysis.recipe_name AS analysis,
+                SUM (analysis.quantity) AS numbers,
+                SUM (analysis.total_cost) AS cost           
+                FROM analysis
+                WHERE analysis.done_date BETWEEN :x AND :y 
+                GROUP BY analysis.recipe_name ORDER BY numbers DESC'''
+            analysis_q = request.dbsession.execute(
+                       analysis_sql, {'x': start, 'y': end}).fetchall()
+            df_an = pd.DataFrame.from_records(analysis_q, coerce_float=True,
+                  columns=['analysis', 'numbers', 'cost'])
+            total_analysis = df_an['numbers'].sum()
+            sum_cost_analysis = df_an['cost'].sum()
+            source_num = ColumnDataSource(data=df_an)
+            plot_an = figure(y_range=df_an['analysis'].tolist(), x_range=(0, df_an['numbers'].max()),
+                plot_height=350, sizing_mode="scale_both",
+                title='Кількість виконаних аналізів', toolbar_location=None,
+                tools='hover', 
+                tooltips="@analysis: @numbers раз, @cost грн.")
+            plot_an.hbar(
+                y=dodge('analysis', 0.0, range=plot_an.y_range), 
+                right='numbers', height=.8, alpha=.5,
+                source=source_num, color='green')
+            an_script , an_div = components(plot_an)
+            return dict(
+                    form=form.render(appstruct),
+                    message=f'Дані періоду: {start} - {end}',
+                    substances=subs_query,
+                    piescript=pie_script,
+                    piediv=pie_div,
+                    subs_total=subs_total_cost,
+                    analysis=analysis_q,
+                    barscript=an_script,
+                    bardiv=an_div,
+                    total_analysis=total_analysis,
+                    sum_cost_analysis=sum_cost_analysis
+                )
+        except ValidationFailure as e:
+            return {'form': e.render(), 'message': 'Помилки у формі', 
+                    'substances': substances}
+    return {'form': form.render(), 'message': message}

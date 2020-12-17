@@ -15,11 +15,17 @@ from deform.exception import ValidationFailure
 
 from pyramid.view import view_config
 from pyramid.response import Response
-from pyramid.httpexceptions import HTTPFound
+from pyramid.httpexceptions import (
+    HTTPFound,
+    HTTPForbidden,
+    HTTPNotFound
+)
 from sqlalchemy import text, desc
 from sqlalchemy.exc import DBAPIError
 
 from .. import models
+
+
 #===================
 # HOME
 @view_config(route_name='home', renderer='../templates/home.jinja2')
@@ -51,7 +57,7 @@ try it again.
 
 #===============
 # SUBSTANCES
-@view_config(route_name='add_substance',
+@view_config(route_name='add_substance', permission='create',
              renderer='../templates/add_substance.jinja2')
 def new_substance(request):
     message = ''
@@ -89,7 +95,7 @@ def new_substance(request):
     return {'message': message, 'form': form}
 
 
-@view_config(route_name='delete_substance')
+@view_config(route_name='delete_substance', permission='edit')
 def delete_substance(request):
     subs_id = request.matchdict['subs_id']
     subs = request.dbsession.query(models.Substance).get(subs_id)
@@ -98,7 +104,8 @@ def delete_substance(request):
     return HTTPFound(location=next_url)
 
 
-@view_config(route_name='substances', renderer='../templates/substances.jinja2')
+@view_config(route_name='substances', renderer='../templates/substances.jinja2',
+             permission='read')
 def substances_list(request):
     query = request.dbsession.query(models.Substance)\
                    .order_by(models.Substance.name).all()
@@ -108,7 +115,7 @@ def substances_list(request):
     return {"subs_list":subs_list}
 
 
-@view_config(route_name='substances_edit',
+@view_config(route_name='substances_edit', permission='edit',
              renderer='../templates/substances_edit.jinja2')
 def substances_edit(request):
     query = request.dbsession.query(models.Substance)\
@@ -120,7 +127,7 @@ def substances_edit(request):
 
 #========================
 # STOCK
-@view_config(route_name='buy_substance',
+@view_config(route_name='buy_substance', permission='create',
              renderer='../templates/buy_substance.jinja2')
 def input_substance(request):
     message = ''
@@ -129,7 +136,7 @@ def input_substance(request):
     if len(subs_query) > 0:
         subs_list = [q.__dict__ for q in subs_query]
     else:
-        message = 'Каталог реактивів пустий! Неможливо створити рецепт.'
+        message = 'Каталог реактивів пустий! Неможливо створити форму прихода.'
         return {'message': message}
     choices = (
         (subs['name'], subs['name'] + ' , ' + subs['measurement'])
@@ -139,17 +146,18 @@ def input_substance(request):
         substance_name = colander.SchemaNode(colander.String(),
             title='Реактив (речовина, індикатор)',
             widget=deform.widget.SelectWidget(values=choices))
-        amount = colander.SchemaNode(colander.Decimal(), default=0.01,
-            validator=colander.Range(min=0, max=decimal.Decimal("100000.00")),
+        amount = colander.SchemaNode(colander.Decimal(), default=0.001,
+            validator=colander.Range(min=-decimal.Decimal(("1000000.000")), 
+                max=decimal.Decimal("1000000.000")),
             title="Кількість",
             description='Вибреріть реактив (речовину, індикатор)',
             widget=deform.widget.TextInputWidget(
                 attributes={
                     "type": "numeric",
                     "inputmode": "decimal",
-                    "step": "0.01",
-                    "min": "0",
-                    "max": "100000.00"
+                    "step": "0.001",
+                    "min": "-1000000.000",
+                    "max": "1000000.000"
                 }))
         price = colander.SchemaNode(colander.Decimal(), default=0.01,
             validator=colander.Range(min=0, max=decimal.Decimal("9999.99")),
@@ -203,16 +211,11 @@ def input_substance(request):
             next_url = request.route_url('stock_history')
             return HTTPFound(location=next_url)
         except ValidationFailure as e:
-            return dict(
-                form=e.render()
-            )
-    return dict(
-        form=form.render(),
-        message=message
-    )
+            return {'form': e.render(),}
+    return {'form': form.render(), 'message': message}
 
 
-@view_config(route_name='stock_history',
+@view_config(route_name='stock_history', permission='create',
              renderer='../templates/stock_history.jinja2')
 def stock_all_parties(request):
     message = ''
@@ -224,13 +227,11 @@ def stock_all_parties(request):
     history = [q.__dict__ for q in query]
     for item in history:
         item['creation_date'] = item['creation_date'].strftime('%Y-%m-%d %H:%M')
-    return dict(
-        message=message,
-        history=history
-    )
+    return {'message': message, 'history': history}
 
 
-@view_config(route_name='stock', renderer='.//templates/stock.jinja2')
+@view_config(route_name='stock', renderer='.//templates/stock.jinja2',
+             permission='create')
 def get_aggregate_stock(request):
     message = ''
     stock_list = []
@@ -259,9 +260,60 @@ def get_aggregate_stock(request):
     return {'stock_list': stock_, 'message': message}
 
 
+# @view_config(route_name='inventory', renderer='../templates/inventory.jinja2',
+#              permission='create')
+# def make_inventory(request):
+#     message = ''
+#     textual_sql = '''
+#         SELECT stock.substance_name AS name,
+#             stock.measurement AS measurement,
+#             SUM (stock.amount) AS amount
+#         FROM stock
+#         GROUP BY name, measurement ORDER BY name'''
+#     class InventorySchema(colander.Schema):
+#         notes = colander.SchemaNode(colander.String(),
+#             title="Примітка",
+#             missing='', default='Проведено інвентаризацію залишків по складу',
+#             validator=colander.Length(max=600),
+#             widget=deform.widget.TextAreaWidget(rows=5, cols=60),
+#             description="Необов'язково, до 600 символів з пробілами",)
+#         def after_bind(self, schema, kwargs):
+#             subs_list = request.dbsession.execute(textual_sql).fetchall()
+#             # subs_list = [sq.__dict__ for sq in query]
+#             for subs in subs_list:
+#                 self[subs['name']] = colander.SchemaNode(colander.Decimal(),
+#                     title=subs["name"] + ', ' + subs["measurement"],
+#                     default=subs['amount'].__float__(),
+#                     description='введіть реальну кількість, якщо вона інша',
+#                     validator=colander.Range(
+#                         min=-decimal.Decimal("999999.999"),
+#                         max=decimal.Decimal("999999.999")
+#                         ),
+#                     widget=deform.widget.TextInputWidget(
+#                         attributes={
+#                             "type": "number",
+#                             "inputmode": "decimal",
+#                             "step": "0.001",
+#                             "min": "0",
+#                             "max": "999999.999"
+#                         })
+#                     )    
+#     schema = InventorySchema().bind(request=request)
+#     button = deform.form.Button(name='submit', type='submit', title="Зробити")
+#     form = deform.Form(schema, buttons=(button,))
+#     if 'submit' in request.POST:
+#         controls = request.POST.items()
+#         try:
+#             appstruct = form.validate(controls)
+#             print(appstruct)
+#         except ValidationFailure as e:
+#             return {'message':'Помилки у формі вводу даних', 'form': e}
+#     return {'form':form, 'message':message}
+
+
 #=======================
 # SOLUTIONS
-@view_config(route_name='aggregate_solution', 
+@view_config(route_name='aggregate_solution', permission='create',
              renderer='../templates/aggregate_solution.jinja2')
 def agregate_solution_remainder(request):
     message = ''
@@ -291,7 +343,8 @@ def agregate_solution_remainder(request):
     return {'solutions': solutions_cleaned, 'message': message}
 
 
-@view_config(route_name='solutions', renderer='../templates/solutions.jinja2')
+@view_config(route_name='solutions', renderer='../templates/solutions.jinja2',
+             permission='create')
 def list_solutions(request):
     query = request.dbsession.query(models.Solution).all()
           # filter(text("remainder > 0")).\
@@ -301,7 +354,7 @@ def list_solutions(request):
     return {"solutions": solutions}
 
 
-@view_config(route_name='create_solution',
+@view_config(route_name='create_solution', permission='create',
              renderer='../templates/create_solution.jinja2')
 def make_new_solution(request):
     message = ''
@@ -365,8 +418,7 @@ def make_new_solution(request):
                         substances_from_data)).all()
             if len(query_stock) == 0:
                 message = f'На складі відсутні всі компоненти!'
-                return {'form': form.render(appstruct), 'message': message,
-                        'normative': normative_name}
+                return {'form': form, 'message': message, 'normative': normative_name}
             else:
                 substances_dicts = [qs.__dict__ for qs in query_stock]
                 df = pd.DataFrame.from_records(substances_dicts)
@@ -378,8 +430,7 @@ def make_new_solution(request):
             if len(missing) > 0:
                 missing_string = ' '.join(missing)
                 message = f'Відсутні залишки: {missing_string}'
-                return {'form': form.render(appstruct), 'message': message, 
-                        'normative': normative_name}
+                return {'form': form, 'message': message, 'normative': normative_name}
             new_records = []
             for key, value in new_data.items():
                 df_key = df[df.substance_name==key]
@@ -433,14 +484,14 @@ def make_new_solution(request):
             next_url = request.route_url('solutions')
             return HTTPFound(location=next_url)
         except ValidationFailure as e:
-            return {'form': e.render(), 'normative': normative_name}
-    return {'form': form.render(), 'normative': normative_name}
+            return {'form': e, 'normative': normative_name}
+    return {'form': form, 'normative': normative_name}
 
 
 #=======================
 # NORMATIVES
 
-@view_config(route_name='normative_list',
+@view_config(route_name='normative_list', permission='read',
              renderer='../templates/normative_list.jinja2')
 def get_all_normatives(request):
     message = ''
@@ -459,7 +510,7 @@ def get_all_normatives(request):
         )
 
 
-@view_config(route_name='new_normative',
+@view_config(route_name='new_normative', permission='create',
              renderer='../templates/new_normative.jinja2')
 def new_normative(request):
     message = ''
@@ -499,7 +550,7 @@ def new_normative(request):
     return {'form': form, 'message': message}
 
 
-@view_config(route_name='new_norm_next',
+@view_config(route_name='new_norm_next', permission='create',
              renderer='../templates/new_norm_next.jinja2')
 def new_norm_next(request):
     message = ''
@@ -524,21 +575,21 @@ def new_norm_next(request):
                     title=subs["name"] + ', '+subs["measurement"],
                     default=0.001,
                     validator=colander.Range(min=0,
-                            max=decimal.Decimal("999.999")),
+                            max=decimal.Decimal("999999.999")),
                     widget=deform.widget.TextInputWidget(
                         attributes={
                             "type": "number",
                             "inputmode": "decimal",
                             "step": "0.001",
                             "min": "0",
-                            "max": "999.999"
+                            "max": "999999.999"
                         })
                     )
     schema = NextFormSchema().bind(request=request)
     button = deform.form.Button(name='submit', title="Створити рецепт",
                                 type='submit')
     form = deform.Form(schema, buttons=(button,))
-    appstruct = {'name': name_solution, 'output': output_}
+    # appstruct = {'name': name_solution, 'output': output_}
     if request.method == 'POST' and 'submit' in request.POST:
         controls = request.POST.items()
         try:
@@ -556,32 +607,24 @@ def new_norm_next(request):
             next_url = request.route_url('normative_list')
             return HTTPFound(location=next_url)
         except ValidationFailure as e:
-            return dict(
-                form=e.render()
-                )
-    return dict(
-        name=name_solution,
-        form=form.render(appstruct),
-        message=message
-    )
+            return {'form': e,}
+    return {'name': name_solution, 'form': form, 'message': message}
 
 
 #==================
 # RECIPES
-@view_config(route_name="recipes", renderer='../templates/recipes.jinja2')
+@view_config(route_name="recipes", renderer='../templates/recipes.jinja2',
+             permission='read')
 def all_recipes(request):
     message = ''
     query = request.dbsession.query(models.Recipe.id, models.Recipe.name)\
             .order_by(models.Recipe.name).all()
     if len(query) == 0:
         message = 'Немає доданих рецептів аналізів.'
-    return dict(
-        recipes=query,
-        message=message
-    )
+    return {'recipes': query, 'message': message}
 
 
-@view_config(route_name='recipe_details',
+@view_config(route_name='recipe_details', permission='read',
              renderer='../templates/recipe_details.jinja2')
 def recipe_details(request):
     id_recipe = request.matchdict['id_recipe']
@@ -598,7 +641,8 @@ def recipe_details(request):
     return {'recipe': recipe}
 
 
-@view_config(route_name='new_recipe', renderer='../templates/new_recipe.jinja2')
+@view_config(route_name='new_recipe', permission='create', 
+             renderer='../templates/new_recipe.jinja2')
 def new_recipe(request):
     message = ''
     subs_query = request.dbsession.query(models.Substance).all()
@@ -646,13 +690,14 @@ def new_recipe(request):
     return {'form': form, 'message': message}
 
 
-@view_config(route_name='new_recipe_next',
+@view_config(route_name='new_recipe_next', permission='create',
              renderer='../templates/new_recipe_next.jinja2')
 def new_recipe_next(request):
     message = ''
     name_analysis = request.matchdict['name']
     class NextRecipeSchema(colander.Schema):
-        name = colander.SchemaNode(colander.String(), title='Назва аналізу')
+        name = colander.SchemaNode(colander.String(), title='Назва аналізу',
+             default=name_analysis)
         def after_bind(self, schema, kwargs):
             req = kwargs['request']
             substances = req.matchdict['substances']
@@ -666,13 +711,13 @@ def new_recipe_next(request):
                     colander.Decimal(),
                     title=subs["name"] + ', ' + subs["measurement"], 
                     default=0.001, 
-                    validator=colander.Range(min=0, max=decimal.Decimal("999.999")),
+                    validator=colander.Range(min=0, max=decimal.Decimal("999999.999")),
                     widget=deform.widget.TextInputWidget(attributes={
                         "type": "number",
                         "inputmode": "decimal", 
                         "step": "0.001", 
                         "min": "0",
-                        "max": "999.999"
+                        "max": "999999.999"
                     })
                 )
             solutions = req.matchdict['solutions']
@@ -686,19 +731,19 @@ def new_recipe_next(request):
                     colander.Decimal(),
                     title=solut['name'] + ', мл', 
                     default=0.001,
-                    validator=colander.Range(min=0, max=decimal.Decimal("999.999")),
+                    validator=colander.Range(min=0, max=decimal.Decimal("999999.999")),
                     widget=deform.widget.TextInputWidget(attributes={
                         "type": "number",
                         "inputmode": "decimal",
                         "step": "0.001",
                         "min": "0",
-                        "max": "999.999"
+                        "max": "999999.999"
                     })
                 )
     schema = NextRecipeSchema().bind(request=request)
     button = deform.form.Button(name='submit', title='Створити новий аналіз', type='submit')
     form = deform.Form(schema, buttons=(button,))
-    appstruct = {'name': name_analysis}
+    # appstruct = {'name': name_analysis}
     subst_names = [s[0] for s in request.dbsession.query(models.Substance.name).all()]
     if 'submit' in request.POST:
         controls = request.POST.items()
@@ -725,17 +770,13 @@ def new_recipe_next(request):
             next_url = request.route_url('recipes')
             return HTTPFound(location=next_url)
         except ValidationFailure as e:
-            return {'form': e.render(), 'message': 'Перевірте поля форми'}
-    return dict(
-        message=message,
-        form=form.render(appstruct),
-        name=name_analysis
-    )
+            return {'form': e, 'message': 'Перевірте поля форми'}
+    return {'message': message, 'form':form, 'name':name_analysis}
 
 
 #==============================
 # ANALYSIS
-@view_config(route_name='add_analysis',
+@view_config(route_name='add_analysis', permission='create',
              renderer='../templates/add_analysis.jinja2')
 def add_done_analysis(request):
     message = ''
@@ -771,8 +812,7 @@ def add_done_analysis(request):
                         substances_names)).all()
             if len(query_stock) == 0:
                 message = f'На складі відсутні речовини!'
-                return {'form': form.render(appstruct), 'message': message,
-                        'recipe': recipe}
+                return {'form': form, 'message': message, 'recipe': recipe}
             else:
                 query_stock_dicts = [qs.__dict__ for qs in query_stock]
                 df = pd.DataFrame.from_records(query_stock_dicts)
@@ -781,8 +821,7 @@ def add_done_analysis(request):
             if len(missing) > 0:
                 missing_string = ' '.join(missing)
                 message = f'Відсутні залишки: {missing_string}'
-                return {'form': form.render(appstruct), 'message': message,
-                        'recipe': recipe}
+                return {'form': form, 'message': message, 'recipe': recipe}
             # list for collect instances of class Stock: to_insert_into_stock
             insert_into_stock = []
             substances_cost = {}
@@ -811,14 +850,13 @@ def add_done_analysis(request):
             solutions_quantity = {
                 key: -value * quantity for key, value in solutions.items() 
             }
-            solutions_names = list(solutions.keys())
+            solutions_names = [*solutions.keys()]
             query_solutions = request.dbsession.query(models.Solution).\
                             filter(models.Solution.normative.in_(
                             solutions_names)).all()
             if len(query_solutions) == 0:
                 message = f'Немає готових розчинів для цього аналізу.'
-                return {'form': form.render(appstruct), 'message': message,
-                        'recipe': recipe}
+                return {'form': form, 'message': message, 'recipe': recipe}
             else:
                 query_solutions_dicts = [qs.__dict__ for qs in query_solutions]
                 df2 = pd.DataFrame.from_records(query_solutions_dicts)
@@ -827,8 +865,7 @@ def add_done_analysis(request):
             if len(missing) > 0:
                 missing_string = ' '.join(missing)
                 message = f'Відсутні залишки: {missing_string}'
-                return {'form': form.render(appstruct), 'message': message,
-                        'recipe': recipe}
+                return {'form': form, 'message': message, 'recipe': recipe}
             insert_into_solutions = []
             solutions_cost = {}
             for key, value in solutions_quantity.items():
@@ -874,11 +911,11 @@ def add_done_analysis(request):
             next_url = request.route_url('analysis_done')
             return HTTPFound(location=next_url)
         except ValidationFailure as e:
-            return {'form': e.render(), 'message': message, 'recipe': recipe}
-    return {'message': message, 'recipe': recipe, 'form': form.render()}
+            return {'form': e, 'message': message, 'recipe': recipe}
+    return {'message': message, 'recipe': recipe, 'form': form}
 
 
-@view_config(route_name='analysis_done', 
+@view_config(route_name='analysis_done', permission='create',
              renderer='../templates/analysis_done.jinja2')
 def analysis_history(request):
     message = ''
@@ -892,7 +929,8 @@ def analysis_history(request):
 
 #===========================
 # STATISTIC
-@view_config(route_name='statistic', renderer='../templates/statistic_form.jinja2')
+@view_config(route_name='statistic', permission='create',
+             renderer='../templates/statistic_form.jinja2')
 def statistic_form(request):
     message = ''
     substances = []
@@ -952,8 +990,7 @@ def statistic_form(request):
                 FROM analysis
                 WHERE analysis.done_date BETWEEN :x AND :y 
                 GROUP BY analysis.recipe_name ORDER BY numbers DESC'''
-            analysis_q = request.dbsession.execute(
-                       analysis_sql, {'x': start, 'y': end}).fetchall()
+            analysis_q = request.dbsession.execute(analysis_sql, {'x': start, 'y': end}).fetchall()
             df_an = pd.DataFrame.from_records(analysis_q, coerce_float=True,
                   columns=['analysis', 'numbers', 'cost'])
             total_analysis = df_an['numbers'].sum()
@@ -962,27 +999,22 @@ def statistic_form(request):
             plot_an = figure(y_range=df_an['analysis'].tolist(), x_range=(0, df_an['numbers'].max()),
                 plot_height=350, sizing_mode="scale_both",
                 title='Кількість виконаних аналізів', toolbar_location=None,
-                tools='hover', 
-                tooltips="@analysis: @numbers раз, @cost грн.")
-            plot_an.hbar(
-                y=dodge('analysis', 0.0, range=plot_an.y_range), 
-                right='numbers', height=.8, alpha=.5,
-                source=source_num, color='green')
+                tools='hover', tooltips="@analysis: @numbers раз, @cost грн.")
+            plot_an.hbar(y=dodge('analysis', 0.0, range=plot_an.y_range), 
+                         right='numbers', height=.8, alpha=.5,
+                         source=source_num, color='green')
+            plot_an.y_range.range_padding = 0.1
+            plot_an.axis.minor_tick_line_color = None
+            ticks = [i for i in range(0, df_an['numbers'].max() + 1, 1)]
+            plot_an.xaxis[0].ticker = ticks
             an_script , an_div = components(plot_an)
-            return dict(
-                    form=form.render(appstruct),
-                    message=f'Дані періоду: {start} - {end}',
-                    substances=subs_query,
-                    piescript=pie_script,
-                    piediv=pie_div,
-                    subs_total=subs_total_cost,
-                    analysis=analysis_q,
-                    barscript=an_script,
-                    bardiv=an_div,
-                    total_analysis=total_analysis,
-                    sum_cost_analysis=sum_cost_analysis
-                )
+            return {'form': form, 'message': f'Дані періоду: {start} - {end}',
+                    'substances':subs_query, 'piescript': pie_script,
+                    'piediv': pie_div, 'subs_total': subs_total_cost,
+                    'analysis': analysis_q, 'barscript': an_script,
+                    'bardiv': an_div, 'total_analysis': total_analysis,
+                    'sum_cost_analysis': sum_cost_analysis}
         except ValidationFailure as e:
-            return {'form': e.render(), 'message': 'Помилки у формі', 
-                    'substances': substances}
-    return {'form': form.render(), 'message': message}
+            return {'form': e, 'message': 'Помилки у формі', 'substances': substances}
+    return {'form': form, 'message': message}
+

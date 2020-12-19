@@ -10,7 +10,7 @@ dist/
 .tox/
 nosetests.xml
 env*/
-tmp/
+# tmp/
 Data.fs*
 *.sublime-project
 *.sublime-workspace

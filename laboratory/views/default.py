@@ -61,12 +61,20 @@ try it again.
              renderer='../templates/add_substance.jinja2')
 def new_substance(request):
     message = ''
+    csrf_token = request.session.get_csrf_token()
+    
+    def validate_csrf(node, value):
+        if value != csrf_token:
+            raise ValueError("Bad CSRF token")
+    class CSRFSchema(colander.Schema):
+        csrf = colander.SchemaNode(colander.String(), default=csrf_token,
+             validator=validate_csrf, widget=deform.widget.HiddenWidget())
     measure_types = (
         ('г', 'грам'),
         ('мл', 'міллілітр'),
         ('шт', 'штука')
     )
-    class SubstanceSchema(colander.Schema):
+    class SubstanceSchema(CSRFSchema):
         name = colander.SchemaNode(colander.String(), title="Назва реактиву")
         measurement = colander.SchemaNode(colander.String(),
                     widget=deform.widget.SelectWidget(values=measure_types),
@@ -131,6 +139,14 @@ def substances_edit(request):
              renderer='../templates/buy_substance.jinja2')
 def input_substance(request):
     message = ''
+    csrf_token = request.session.get_csrf_token()
+    
+    def validate_csrf(node, value):
+        if value != csrf_token:
+            raise ValueError("Bad CSRF token")
+    class CSRFSchema(colander.Schema):
+        csrf = colander.SchemaNode(colander.String(), default=csrf_token,
+             validator=validate_csrf, widget=deform.widget.HiddenWidget())
     subs_query = request.dbsession.query(models.Substance).all()
     subs_list = []
     if len(subs_query) > 0:
@@ -142,7 +158,7 @@ def input_substance(request):
         (subs['name'], subs['name'] + ' , ' + subs['measurement'])
         for subs in subs_list
     )
-    class BuySchema(colander.Schema):
+    class BuySchema(CSRFSchema):
         substance_name = colander.SchemaNode(colander.String(),
             title='Реактив (речовина, індикатор)',
             widget=deform.widget.SelectWidget(values=choices))
@@ -358,13 +374,21 @@ def list_solutions(request):
              renderer='../templates/create_solution.jinja2')
 def make_new_solution(request):
     message = ''
+    csrf_token = request.session.get_csrf_token()
+    
+    def validate_csrf(node, value):
+        if value != csrf_token:
+            raise ValueError("Bad CSRF token")
+    class CSRFSchema(colander.Schema):
+        csrf = colander.SchemaNode(colander.String(), default=csrf_token,
+             validator=validate_csrf, widget=deform.widget.HiddenWidget())
     normative_name = request.matchdict['normative']
     current_normative = request.dbsession.query(models.Normative).\
         filter(models.Normative.name==normative_name).first()
     current_normative = current_normative.__dict__
     output = current_normative['output']
     data_dict = json.loads(current_normative['data'])
-    class SolutionSchema(colander.Schema):
+    class SolutionSchema(CSRFSchema):
         amount = colander.SchemaNode(colander.Integer(),
             title="Об'єм, вихід", default=int(output))
         measurement = colander.SchemaNode(colander.String(),
@@ -514,6 +538,14 @@ def get_all_normatives(request):
              renderer='../templates/new_normative.jinja2')
 def new_normative(request):
     message = ''
+    csrf_token = request.session.get_csrf_token()
+    
+    def validate_csrf(node, value):
+        if value != csrf_token:
+            raise ValueError("Bad CSRF token")
+    class CSRFSchema(colander.Schema):
+        csrf = colander.SchemaNode(colander.String(), default=csrf_token,
+             validator=validate_csrf, widget=deform.widget.HiddenWidget())
     subs_query = request.dbsession.query(models.Substance).all()
     subs_list = []
     if len(subs_query) > 0:
@@ -522,7 +554,7 @@ def new_normative(request):
         message = 'Каталог реактивів пустий! Неможливо створити рецепт.'
         return {'message': message}
     choices = ( (subs['id'], subs['name']) for subs in subs_list )
-    class NormativeSchema(colander.Schema):
+    class NormativeSchema(CSRFSchema):
         name = colander.SchemaNode(colander.String(), title="Назва розчину")
         output = colander.SchemaNode(
             colander.Integer(),
@@ -554,9 +586,17 @@ def new_normative(request):
              renderer='../templates/new_norm_next.jinja2')
 def new_norm_next(request):
     message = ''
+    csrf_token = request.session.get_csrf_token()
+    
+    def validate_csrf(node, value):
+        if value != csrf_token:
+            raise ValueError("Bad CSRF token")
+    class CSRFSchema(colander.Schema):
+        csrf = colander.SchemaNode(colander.String(), default=csrf_token,
+             validator=validate_csrf, widget=deform.widget.HiddenWidget())
     name_solution = request.matchdict['name']
     output_ = request.matchdict['output']
-    class NextFormSchema(colander.Schema):
+    class NextFormSchema(CSRFSchema):
         name = colander.SchemaNode(colander.String(), title="Назва розчину",
              default=name_solution)
         output = colander.SchemaNode(colander.Integer(),
@@ -645,6 +685,14 @@ def recipe_details(request):
              renderer='../templates/new_recipe.jinja2')
 def new_recipe(request):
     message = ''
+    csrf_token = request.session.get_csrf_token()
+    
+    def validate_csrf(node, value):
+        if value != csrf_token:
+            raise ValueError("Bad CSRF token")
+    class CSRFSchema(colander.Schema):
+        csrf = colander.SchemaNode(colander.String(), default=csrf_token,
+             validator=validate_csrf, widget=deform.widget.HiddenWidget())
     subs_query = request.dbsession.query(models.Substance).all()
     subs_list = []
     if len(subs_query) > 0:
@@ -661,7 +709,7 @@ def new_recipe(request):
         message = 'Немає жодного розчину в базі даних! Створіть хоч би один.'
         return {'message': message}
     solution_choices = ( (item['id'], item['name']) for item in solutions )
-    class RecipeSchema(colander.Schema):
+    class RecipeSchema(CSRFSchema):
         name = colander.SchemaNode(colander.String(), title='Назва аналізу',
             description='введіть унікальну назву аналізу')
         substances = colander.SchemaNode(colander.Set(), title='Речовини',
@@ -694,8 +742,16 @@ def new_recipe(request):
              renderer='../templates/new_recipe_next.jinja2')
 def new_recipe_next(request):
     message = ''
+    csrf_token = request.session.get_csrf_token()
+    
+    def validate_csrf(node, value):
+        if value != csrf_token:
+            raise ValueError("Bad CSRF token")
+    class CSRFSchema(colander.Schema):
+        csrf = colander.SchemaNode(colander.String(), default=csrf_token,
+             validator=validate_csrf, widget=deform.widget.HiddenWidget())
     name_analysis = request.matchdict['name']
-    class NextRecipeSchema(colander.Schema):
+    class NextRecipeSchema(CSRFSchema):
         name = colander.SchemaNode(colander.String(), title='Назва аналізу',
              default=name_analysis)
         def after_bind(self, schema, kwargs):
@@ -780,12 +836,20 @@ def new_recipe_next(request):
              renderer='../templates/add_analysis.jinja2')
 def add_done_analysis(request):
     message = ''
+    csrf_token = request.session.get_csrf_token()
+    
+    def validate_csrf(node, value):
+        if value != csrf_token:
+            raise ValueError("Bad CSRF token")
+    class CSRFSchema(colander.Schema):
+        csrf = colander.SchemaNode(colander.String(), default=csrf_token,
+             validator=validate_csrf, widget=deform.widget.HiddenWidget())
     id_recipe = request.matchdict['id_recipe']
     recipe = request.dbsession.query(models.Recipe).get(id_recipe)
     recipe_name = recipe.name
     substances = json.loads(recipe.substances)
     solutions = json.loads(recipe.solutions)
-    class AddAnalysisSchema(colander.Schema):
+    class AddAnalysisSchema(CSRFSchema):
         done_date = colander.SchemaNode(colander.Date(),
             title="Дата виконання", validator=colander.Range(
             min=datetime.date(datetime.date.today().year, 1, 1),
@@ -933,11 +997,19 @@ def analysis_history(request):
              renderer='../templates/statistic_form.jinja2')
 def statistic_form(request):
     message = ''
+    csrf_token = request.session.get_csrf_token()
+    
+    def validate_csrf(node, value):
+        if value != csrf_token:
+            raise ValueError("Bad CSRF token")
+    class CSRFSchema(colander.Schema):
+        csrf = colander.SchemaNode(colander.String(), default=csrf_token,
+             validator=validate_csrf, widget=deform.widget.HiddenWidget())
     substances = []
     pie_script = ''
     pie_div = ''
     today = datetime.date.today()
-    class StatisticSchema(colander.Schema):
+    class StatisticSchema(CSRFSchema):
         begin_date = colander.SchemaNode(colander.Date(), title="Початок періоду", 
                    default=today)
         end_date = colander.SchemaNode(colander.Date(), title='Кінець періоду',

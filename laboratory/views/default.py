@@ -227,8 +227,8 @@ def input_substance(request):
             next_url = request.route_url('stock_history')
             return HTTPFound(location=next_url)
         except ValidationFailure as e:
-            return {'form': e.render(),}
-    return {'form': form.render(), 'message': message}
+            return {'form': e,}
+    return {'form': form, 'message': message}
 
 
 @view_config(route_name='stock_history', permission='create',

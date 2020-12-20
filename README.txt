@@ -42,3 +42,6 @@ Getting Started
 - Run your project.
 
     env/bin/pserve development.ini
+
+-------
+git@github.com:kivaschenko/laboratory.git

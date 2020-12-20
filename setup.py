@@ -21,7 +21,7 @@ requires = [
     'transaction',
     'zope.sqlalchemy',
     # new
-    'psycopg2-binary',
+    # 'psycopg2-binary',
     'deform',
     'bcrypt',
     'pandas',

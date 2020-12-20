@@ -269,7 +269,7 @@ def get_aggregate_stock(request):
             temp_dict['measurement'] = q['measurement']
             temp_dict['total_amount'] = q['total_amount'].__float__()
             temp_dict['avg_price'] = q['avg_price'].__float__()
-            temp_dict['sum_cost'] = q['sum_cost'].__floor__()
+            temp_dict['sum_cost'] = q['sum_cost']
             stock_.append(temp_dict)
     except DBAPIError:
         message = db_err_msg
@@ -352,7 +352,7 @@ def agregate_solution_remainder(request):
             temp_dict['measurement'] = sol['measurement']
             temp_dict['total_amount'] = sol['total_amount'].__float__()
             temp_dict['avg_price'] = sol['avg_price'].__float__()
-            temp_dict['sum_cost'] = sol['sum_cost'].__floor__()
+            temp_dict['sum_cost'] = sol['sum_cost']
             solutions_cleaned.append(temp_dict)
     except DBAPIError:
         message = db_err_msg

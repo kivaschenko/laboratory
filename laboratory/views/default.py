@@ -62,19 +62,18 @@ try it again.
 def new_substance(request):
     message = ''
     csrf_token = request.session.get_csrf_token()
-    
     def validate_csrf(node, value):
         if value != csrf_token:
             raise ValueError("Bad CSRF token")
     class CSRFSchema(colander.Schema):
         csrf = colander.SchemaNode(colander.String(), default=csrf_token,
              validator=validate_csrf, widget=deform.widget.HiddenWidget())
-    measure_types = (
-        ('г', 'грам'),
-        ('мл', 'міллілітр'),
-        ('шт', 'штука')
-    )
     class SubstanceSchema(CSRFSchema):
+        measure_types = (
+            ('г', 'грам'),
+            ('мл', 'міллілітр'),
+            ('шт', 'штука'),
+        )
         name = colander.SchemaNode(colander.String(), title="Назва реактиву")
         measurement = colander.SchemaNode(colander.String(),
                     widget=deform.widget.SelectWidget(values=measure_types),
@@ -99,8 +98,8 @@ def new_substance(request):
             next_url = request.route_url('substances')
             return HTTPFound(location=next_url)
         except ValidationFailure as e:
-            return {'form': e, 'message': message}
-    return {'message': message, 'form': form}
+            return {'form': e.render(), 'message': message}
+    return {'message': message, 'form': form.render()}
 
 
 @view_config(route_name='delete_substance', permission='edit')
@@ -140,7 +139,6 @@ def substances_edit(request):
 def input_substance(request):
     message = ''
     csrf_token = request.session.get_csrf_token()
-    
     def validate_csrf(node, value):
         if value != csrf_token:
             raise ValueError("Bad CSRF token")
@@ -154,17 +152,18 @@ def input_substance(request):
     else:
         message = 'Каталог реактивів пустий! Неможливо створити форму прихода.'
         return {'message': message}
-    choices = (
-        (subs['name'], subs['name'] + ' , ' + subs['measurement'])
-        for subs in subs_list
-    )
+    choices = [
+        (subs['name'], subs['name'] + ', ' + subs['measurement']) for subs in subs_list
+        ]
     class BuySchema(CSRFSchema):
         substance_name = colander.SchemaNode(colander.String(),
             title='Реактив (речовина, індикатор)',
             widget=deform.widget.SelectWidget(values=choices))
         amount = colander.SchemaNode(colander.Decimal(), default=0.001,
-            validator=colander.Range(min=-decimal.Decimal(("1000000.000")), 
-                max=decimal.Decimal("1000000.000")),
+            validator=colander.Range(
+                min=-decimal.Decimal("1000000.000"), 
+                max=decimal.Decimal("1000000.000")
+            ),
             title="Кількість",
             description='Вибреріть реактив (речовину, індикатор)',
             widget=deform.widget.TextInputWidget(
@@ -174,10 +173,12 @@ def input_substance(request):
                     "step": "0.001",
                     "min": "-1000000.000",
                     "max": "1000000.000"
-                }))
+                }
+            )
+        )
         price = colander.SchemaNode(colander.Decimal(), default=0.01,
             validator=colander.Range(min=0, max=decimal.Decimal("9999.99")),
-            title=" Ціна, грн.",
+            title="Ціна, грн.",
             widget=deform.widget.TextInputWidget(
                 attributes={
                     "type": "numeric",
@@ -188,6 +189,7 @@ def input_substance(request):
                 }))
         notes = colander.SchemaNode(colander.String(),
             title="Примітка",
+            default=' ',
             missing='',
             validator=colander.Length(max=600),
             widget=deform.widget.TextAreaWidget(rows=5, cols=60),
@@ -227,8 +229,8 @@ def input_substance(request):
             next_url = request.route_url('stock_history')
             return HTTPFound(location=next_url)
         except ValidationFailure as e:
-            return {'form': e,}
-    return {'form': form, 'message': message}
+            return {'form': e.render(),}
+    return {'form': form.render(), 'message': message}
 
 
 @view_config(route_name='stock_history', permission='create',
@@ -321,7 +323,6 @@ def get_aggregate_stock(request):
 #         controls = request.POST.items()
 #         try:
 #             appstruct = form.validate(controls)
-#             print(appstruct)
 #         except ValidationFailure as e:
 #             return {'message':'Помилки у формі вводу даних', 'form': e}
 #     return {'form':form, 'message':message}
@@ -685,8 +686,7 @@ def recipe_details(request):
              renderer='../templates/new_recipe.jinja2')
 def new_recipe(request):
     message = ''
-    csrf_token = request.session.get_csrf_token()
-    
+    csrf_token = request.session.get_csrf_token() 
     def validate_csrf(node, value):
         if value != csrf_token:
             raise ValueError("Bad CSRF token")
@@ -700,7 +700,7 @@ def new_recipe(request):
     else:
         message = 'Каталог реактивів пустий! Неможливо створити рецепт.'
         return {'message': message}
-    substance_choices = ((subs['id'], subs['name']) for subs in subs_list)
+    substance_choices = [(subs['id'], subs['name']) for subs in subs_list]
     solution_query = request.dbsession.query(models.Normative).all()
     solutions = []
     if len(solution_query) > 0:
@@ -708,7 +708,7 @@ def new_recipe(request):
     else:
         message = 'Немає жодного розчину в базі даних! Створіть хоч би один.'
         return {'message': message}
-    solution_choices = ( (item['id'], item['name']) for item in solutions )
+    solution_choices = [(item['id'], item['name']) for item in solutions]
     class RecipeSchema(CSRFSchema):
         name = colander.SchemaNode(colander.String(), title='Назва аналізу',
             description='введіть унікальну назву аналізу')
@@ -730,20 +730,19 @@ def new_recipe(request):
                         filter(models.Recipe.name==certain_name).all()
             if len(check_query) > 0:
                 return {'message': 'Така назва аналізу вже існує!',
-                        'form': form}
+                        'form': form.render()}
             next_url = request.route_url('new_recipe_next', **appstruct)
             return HTTPFound(location=next_url)
         except ValidationFailure as e:
-            return {'form': e, 'message': message}
-    return {'form': form, 'message': message}
+            return {'form': e.render(), 'message': message}
+    return {'form': form.render(), 'message': message}
 
 
 @view_config(route_name='new_recipe_next', permission='create',
              renderer='../templates/new_recipe_next.jinja2')
 def new_recipe_next(request):
     message = ''
-    csrf_token = request.session.get_csrf_token()
-    
+    csrf_token = request.session.get_csrf_token() 
     def validate_csrf(node, value):
         if value != csrf_token:
             raise ValueError("Bad CSRF token")
@@ -810,6 +809,7 @@ def new_recipe_next(request):
             subst_here = set(subst_names) & set(deserialized_keys)
             substances = {}
             solutions = {}
+            pop_csrf = deserialized.pop('csrf')
             for key, value in deserialized.items():
                 if key in subst_here:
                     substances[key] = float(value)
@@ -826,8 +826,8 @@ def new_recipe_next(request):
             next_url = request.route_url('recipes')
             return HTTPFound(location=next_url)
         except ValidationFailure as e:
-            return {'form': e, 'message': 'Перевірте поля форми'}
-    return {'message': message, 'form':form, 'name':name_analysis}
+            return {'form': e.render(), 'message': 'Перевірте поля форми'}
+    return {'message': message, 'form':form.render(), 'name':name_analysis}
 
 
 #==============================

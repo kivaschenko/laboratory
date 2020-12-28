@@ -3,7 +3,7 @@ import decimal
 import colander
 import deform
 import datetime
-from math import pi 
+from math import pi
 
 import pandas as pd
 from bokeh.palettes import viridis, inferno
@@ -161,7 +161,7 @@ def input_substance(request):
             widget=deform.widget.SelectWidget(values=choices))
         amount = colander.SchemaNode(colander.Decimal(), default=0.001,
             validator=colander.Range(
-                min=-decimal.Decimal("1000000.000"), 
+                min=-decimal.Decimal("1000000.000"),
                 max=decimal.Decimal("1000000.000")
             ),
             title="Кількість",
@@ -315,7 +315,7 @@ def get_aggregate_stock(request):
 #                             "min": "0",
 #                             "max": "999999.999"
 #                         })
-#                     )    
+#                     )
 #     schema = InventorySchema().bind(request=request)
 #     button = deform.form.Button(name='submit', type='submit', title="Зробити")
 #     form = deform.Form(schema, buttons=(button,))
@@ -376,7 +376,7 @@ def list_solutions(request):
 def make_new_solution(request):
     message = ''
     csrf_token = request.session.get_csrf_token()
-    
+
     def validate_csrf(node, value):
         if value != csrf_token:
             raise ValueError("Bad CSRF token")
@@ -540,7 +540,7 @@ def get_all_normatives(request):
 def new_normative(request):
     message = ''
     csrf_token = request.session.get_csrf_token()
-    
+
     def validate_csrf(node, value):
         if value != csrf_token:
             raise ValueError("Bad CSRF token")
@@ -588,7 +588,7 @@ def new_normative(request):
 def new_norm_next(request):
     message = ''
     csrf_token = request.session.get_csrf_token()
-    
+
     def validate_csrf(node, value):
         if value != csrf_token:
             raise ValueError("Bad CSRF token")
@@ -682,11 +682,11 @@ def recipe_details(request):
     return {'recipe': recipe}
 
 
-@view_config(route_name='new_recipe', permission='create', 
+@view_config(route_name='new_recipe', permission='create',
              renderer='../templates/new_recipe.jinja2')
 def new_recipe(request):
     message = ''
-    csrf_token = request.session.get_csrf_token() 
+    csrf_token = request.session.get_csrf_token()
     def validate_csrf(node, value):
         if value != csrf_token:
             raise ValueError("Bad CSRF token")
@@ -742,7 +742,7 @@ def new_recipe(request):
              renderer='../templates/new_recipe_next.jinja2')
 def new_recipe_next(request):
     message = ''
-    csrf_token = request.session.get_csrf_token() 
+    csrf_token = request.session.get_csrf_token()
     def validate_csrf(node, value):
         if value != csrf_token:
             raise ValueError("Bad CSRF token")
@@ -764,13 +764,13 @@ def new_recipe_next(request):
             for subs in subs_list:
                 self[subs['name']] = colander.SchemaNode(
                     colander.Decimal(),
-                    title=subs["name"] + ', ' + subs["measurement"], 
-                    default=0.001, 
+                    title=subs["name"] + ', ' + subs["measurement"],
+                    default=0.001,
                     validator=colander.Range(min=0, max=decimal.Decimal("999999.999")),
                     widget=deform.widget.TextInputWidget(attributes={
                         "type": "number",
-                        "inputmode": "decimal", 
-                        "step": "0.001", 
+                        "inputmode": "decimal",
+                        "step": "0.001",
                         "min": "0",
                         "max": "999999.999"
                     })
@@ -784,7 +784,7 @@ def new_recipe_next(request):
             for solut in solut_list:
                 self[solut['name']] = colander.SchemaNode(
                     colander.Decimal(),
-                    title=solut['name'] + ', мл', 
+                    title=solut['name'] + ', мл',
                     default=0.001,
                     validator=colander.Range(min=0, max=decimal.Decimal("999999.999")),
                     widget=deform.widget.TextInputWidget(attributes={
@@ -837,7 +837,7 @@ def new_recipe_next(request):
 def add_done_analysis(request):
     message = ''
     csrf_token = request.session.get_csrf_token()
-    
+
     def validate_csrf(node, value):
         if value != csrf_token:
             raise ValueError("Bad CSRF token")
@@ -912,7 +912,7 @@ def add_done_analysis(request):
                 insert_into_stock.append(new_stock)
                 substances_cost[key] = subs_total_cost
             solutions_quantity = {
-                key: -value * quantity for key, value in solutions.items() 
+                key: -value * quantity for key, value in solutions.items()
             }
             solutions_names = [*solutions.keys()]
             query_solutions = request.dbsession.query(models.Solution).\
@@ -998,7 +998,7 @@ def analysis_history(request):
 def statistic_form(request):
     message = ''
     csrf_token = request.session.get_csrf_token()
-    
+
     def validate_csrf(node, value):
         if value != csrf_token:
             raise ValueError("Bad CSRF token")
@@ -1010,7 +1010,7 @@ def statistic_form(request):
     pie_div = ''
     today = datetime.date.today()
     class StatisticSchema(CSRFSchema):
-        begin_date = colander.SchemaNode(colander.Date(), title="Початок періоду", 
+        begin_date = colander.SchemaNode(colander.Date(), title="Початок періоду",
                    default=today)
         end_date = colander.SchemaNode(colander.Date(), title='Кінець періоду',
                  default=today)
@@ -1026,13 +1026,12 @@ def statistic_form(request):
             subst_text_sql = '''SELECT stock.substance_name AS subs_name,
                 stock.measurement AS subs_measure,
                 SUM (stock.amount) * -1 AS total_amount,
-                SUM (total_cost) * -1 AS costs 
+                SUM (total_cost) * -1 AS costs
                 FROM stock
                 WHERE stock.creation_date BETWEEN :x AND :y AND stock.amount < 0
                 GROUP BY stock.substance_name, stock.measurement
                 ORDER BY costs DESC'''
-            subs_query = request.dbsession.execute(
-                       subst_text_sql, {'x': start, 'y': end}).fetchall()
+            subs_query = request.dbsession.execute(subst_text_sql, {'x': start, 'y': end}).fetchall()
             df_subs = pd.DataFrame.from_records(subs_query, coerce_float=True,
                 columns=['subs_name', 'subs_measure', 'total_amount', 'costs'])
             subs_total_cost = df_subs['costs'].sum()
@@ -1043,7 +1042,7 @@ def statistic_form(request):
             source = ColumnDataSource(data=df_subs)
             pieplot = figure(
                 plot_height=400, sizing_mode="scale_both",
-                title='Частки витрат речовин, грн.', toolbar_location=None, 
+                title='Частки витрат речовин, грн.', toolbar_location=None,
                 tools='hover', tooltips="@subs_name: @costs" + " грн.",
                 x_range=(-0.5, 1.0)
             )
@@ -1058,9 +1057,9 @@ def statistic_form(request):
             # analysis horizontal bar and table
             analysis_sql = '''SELECT analysis.recipe_name AS analysis,
                 SUM (analysis.quantity) AS numbers,
-                SUM (analysis.total_cost) AS cost           
+                SUM (analysis.total_cost) AS cost
                 FROM analysis
-                WHERE analysis.done_date BETWEEN :x AND :y 
+                WHERE analysis.done_date BETWEEN :x AND :y
                 GROUP BY analysis.recipe_name ORDER BY numbers DESC'''
             analysis_q = request.dbsession.execute(analysis_sql, {'x': start, 'y': end}).fetchall()
             df_an = pd.DataFrame.from_records(analysis_q, coerce_float=True,
@@ -1072,7 +1071,7 @@ def statistic_form(request):
                 plot_height=350, sizing_mode="scale_both",
                 title='Кількість виконаних аналізів', toolbar_location=None,
                 tools='hover', tooltips="@analysis: @numbers раз, @cost грн.")
-            plot_an.hbar(y=dodge('analysis', 0.0, range=plot_an.y_range), 
+            plot_an.hbar(y=dodge('analysis', 0.0, range=plot_an.y_range),
                          right='numbers', height=.8, alpha=.5,
                          source=source_num, color='green')
             plot_an.y_range.range_padding = 0.1
@@ -1089,4 +1088,3 @@ def statistic_form(request):
         except ValidationFailure as e:
             return {'form': e, 'message': 'Помилки у формі', 'substances': substances}
     return {'form': form, 'message': message}
-

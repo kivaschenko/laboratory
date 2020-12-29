@@ -24,8 +24,8 @@
 			{% for row in substances %}
 			<tr>
 				<td>{{ row['subs_name'] }}</td>
-				<td>{{ row['subs_measure'] }}</td>
-				<td>{{ '%0.2f'| format(row['total_amount']|float) }}</td>
+				<td>{{ row['measurement'] }}</td>
+				<td>{{ '%0.2f'| format(row['amount']|float) }}</td>
 				<td>{{ '%0.2f'| format(row['costs']|float) }}</td>
 			</tr>
 			{% endfor %}

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="{{request.locale_name}}">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="pyramid web application">
+    <meta name="author" content="Pylons Project">
+    <link rel="shortcut icon" href="{{request.static_url('laboratory:static/pyramid-16x16.png')}}">
+    {% block title %}
+    <title>Програма для обліку реактивів в лабораторії</title>
+    {% endblock title %}
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+    <!-- Custom styles for this scaffold -->
+    <link href="{{request.static_url('laboratory:static/theme.css')}}" rel="stylesheet">
+
+    <!-- DataTables -->
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.22/js/dataTables.bootstrap.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.22/css/dataTables.bootstrap.min.css">
+    <!-- /DataTables -->
+
+    <!-- Bokeh -->
+    <script src="https://cdn.bokeh.org/bokeh/release/bokeh-2.2.3.min.js" integrity="sha384-T2yuo9Oe71Cz/I4X9Ac5+gpEa5a8PpJCDlqKYO0CfAuEszu1JrXLl8YugMqYe3sM" crossorigin="anonymous"></script>
+    <script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.2.3.min.js" integrity="sha384-MHrCce1X9Kh65F45SS4FMgl6u8lKUfWP+TmHXRR42CJXeotpPK21xw7Rre0xQ/A/" crossorigin="anonymous"></script>
+    <script src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.2.3.min.js" integrity="sha384-89bArO+nlbP3sgakeHjCo1JYxYR5wufVgA3IbUvDY+K7w4zyxJqssu7wVnfeKCq8" crossorigin="anonymous"></script>
+    <!-- /Bokeh -->
+
+    <!-- HTML5 shiv and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="//oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js" integrity="sha384-0s5Pv64cNZJieYFkXYOTId2HMA2Lfb6q2nAcx2n0RTLUnCAoTTsS0nKEO27XyKcY" crossorigin="anonymous"></script>
+      <script src="//oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js" integrity="sha384-ZoaMbDF+4LeFxg6WdScQ9nnR1QC2MIRxA1O9KWEXQwns1G8UNyIEZIQidzb0T1fo" crossorigin="anonymous"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <div class="starter-template">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-3">
+            <img class="logo img-responsive" src="{{request.static_url('laboratory:static/pyramid.png') }}" alt="logo">
+            <div class="nav-menu links">
+              <ul>
+                <li><i class="glyphicon glyphicon-home icon-muted"></i><a href="/"> Головна сторінка</a></li>
+                <li><i class="glyphicon glyphicon-barcode icon-muted"></i><a href="/substances"> Реактиви каталог</a></li>
+                <li><i class="glyphicon glyphicon-piggy-bank icon-muted"></i><a href="/stock"> Склад</a></li>
+                <li><i class="glyphicon glyphicon-plus icon-muted"></i><a href="/buy-substance"> Приход на склад</a></li>
+                <li><i class="glyphicon glyphicon-list-alt icon-muted"></i><a href="/stock-history"> Історія руху по складу</a></li>
+                <hr>
+                <li><i class="glyphicon glyphicon-glass icon-muted"></i><a href="/normatives"> Рецепти розчинів</a></li>
+                <li><i class="glyphicon glyphicon-th-list icon-muted"></i><a href="/solutions"> Розчини журнал</a></li>
+                <li><i class="glyphicon glyphicon-tint icon-muted"></i><a href="/aggregate-solution"> Залишки розчинів</a></li>
+                <hr>
+                <li><i class="glyphicon glyphicon-book icon-muted"></i><a href="/recipes"> Нормативи аналізів</a></li>
+                <li><i class="glyphicon glyphicon-search icon-muted"></i><a href="/analysis-done"> Виконані аналізи</a></li>
+                <li><i class="glyphicon glyphicon-th-list icon-muted"></i><a href="/statistic"> Статистика витрат</a></li>
+                <hr>
+                {% if request.user %}
+                <li><i class="glyphicon glyphicon-user icon-muted"></i> {{ request.user.nickname }}</li>
+                <li><i class="glyphicon glyphicon-log-out icon-muted"></i><a href="/logout"> Вийти</a></li>
+                {% else %}
+                <li><i class="glyphicon glyphicon-log-in icon-muted"></i><a href="/login"> Зайти</a></li>
+                {% endif %}
+              </ul>
+            </div>
+          </div>
+          <div class="col-md-8">
+            {% block content %}
+                <p>No content</p>
+            {% endblock content %}
+          </div>
+        </div>
+        <div class="row">
+
+        </div>
+        <div class="row">
+          <div class="copyright">
+            Copyright &copy; <a href="https://github.com/kivaschenko">kivaschenko</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <!-- <script src="//code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script> -->
+
+  </body>
+</html>

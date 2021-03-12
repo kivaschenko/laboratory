@@ -1,0 +1,9 @@
+{% extends 'layout.jinja2' %}
+
+{% block content %}
+<div class="content">
+<h1><span class="font-normal">Додати в базу виконане дослідження:</span>
+  <span class="lead font-bold">{{ recipe['name'] }}</span></h1>
+  <p><span class="lead font-semi-bold">{{ message }}</span></p>
+{{ form.render()|safe }}
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "layout.jinja2" %}
+
+{% block content %}
+<div class="content">
+  <h1><span class="font-semi-bold">Лабораторія</span> <span class="smaller">комбікормовий завод</span></h1>
+  <p class="lead">Вітаємо, це <span class="font-normal">{{project}}</span>, створена за допомогою <a href="https://trypyramid.com/">&nbsp;Pyramid application&nbsp;</a>by<br><span class="font-normal">Cookiecutter</span>.</p>
+  <p>{{ one['name'] }} - основний компонет для розчинів. В каталозі реактивів під номером {{ one['id'] }}. Одиниця виміру: {{ one['measurement'] }}</p>
+  
+</div>
+{% endblock content %}

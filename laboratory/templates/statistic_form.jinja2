@@ -1,0 +1,96 @@
+{% extends 'layout.jinja2' %}
+
+{% block content %}
+<div class="content">
+	<h1><span class="smaller font-bold">Витрати за період</span></h1>
+	<p class="lead">Введіть кількість розчину у відповідні поля форми та натисніть кнопку для запису в базу даних.</p>
+	<h3><span class="lead font-normal">{{message}}</span></h3>
+	{{ form.render()|safe}}
+	<hr>
+	{% if substances %}
+	<h2><span class="lead font-semi-bold">Витрати речовин за період</span></h2>
+	<p>Нажміть на кнопку щоб роздрукувати цю сторінку або зберегти в .pdf файл
+		<button onclick=window.print() class="btn btn-primary">Друк</button></p>
+	<table id="substTable" class="table table-bordered" style="width:100%">
+		<thead>
+			<tr>
+				<th>Речовина</th>
+				<th>Од. виміру</th>
+				<th>Кількість</th>
+				<th>Сума, грн.</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for row in substances %}
+			<tr>
+				<td>{{ row['subs_name'] }}</td>
+				<td>{{ row['measurement'] }}</td>
+				<td>{{ '%0.2f'| format(row['amount']|float) }}</td>
+				<td>{{ '%0.2f'| format(row['costs']|float) }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	<table class="table table-bordered" style="width:100%">
+		<tbody>
+			<tr>
+				<th>Всього витрат, грн.</th>
+				<th>{{ '%0.2f'| format(subs_total|float) }}</th>
+			</tr>
+		</tbody>
+	</table>
+	{{ piescript|safe }}
+	{{ piediv|safe }}
+<script>
+	$(document).ready(function() {
+		$('#substTable').DataTable( {
+			"paging": false,
+			"info": false,
+		});
+	});
+</script>
+{% endif %}
+
+{% if analysis %}
+<h2><span class="lead font-semi-bold">Проведені дослідження за період</span></h2>
+<table id="analysisTable" class="table table-bordered" style="width:100%">
+	<thead>
+		<tr>
+			<th>Аналіз</th>
+			<th>Кількість</th>
+			<th>Вартість</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for row in analysis %}
+		<tr>
+			<td>{{ row['analysis'] }}</td>
+			<td>{{ row['numbers'] }}</td>
+			<td>{{ '%0.2f'| format(row['cost']|float) }}</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+<table class="table table-bordered" style="width:100%">
+	<tbody>
+		<tr>
+			<th>Всього по аналізам:</th>
+			<th>{{ total_analysis }} досліджень</th>
+			<th>На суму {{ '%0.2f'| format(sum_cost_analysis|float) }} гривень</th>
+		</tr>
+	</tbody>
+</table>
+{{ barscript|safe }}
+{{ bardiv|safe }}
+<script>
+	$(document).ready(function() {
+		$('#analysisTable').DataTable( {
+			'paging': false,
+			'info': false,
+		});
+	});
+</script>
+{% endif %}
+
+</div>
+{% endblock%}

@@ -1,0 +1,47 @@
+{% extends 'layout.jinja2' %}
+
+{% block content %}
+<div class="content">
+<h1><span class="font-boldl">{{ recipe['name'] }}</span><br><span class="smaller">повний перелік компонентів</span></h1>
+<p>Нажміть на кнопку щоб роздрукувати цю сторінку або зберегти в .pdf файл
+<button onclick=window.print() class="btn btn-success">Друк</button></p>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Компонент</th>
+            <th>Кількість</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="lead">Речовини та реактиви:</span></td>
+            <td></td>
+        </tr>
+        {% if recipe['substances'] %}
+        {% for key, value in recipe['substances'].items() %}
+        <tr>
+            <th><span class="font-normal">{{ key }}</span></th>
+            <td>{{ value }}</td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr></tr>
+        {% endif %}
+        <tr>
+            <td><span class="lead">Розчини:</span></td>
+            <td></td>
+        </tr>
+        {% if recipe['solutions'] %}
+        {% for key, value in recipe['solutions'].items() %}
+        <tr>
+            <th><span class="font-normal">{{ key }}</span></th>
+            <td>{{ value }}</td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr></tr>
+        {% endif %}
+    </tbody>
+</table>
+</div>
+{% endblock %}

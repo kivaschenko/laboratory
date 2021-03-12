@@ -1,0 +1,9 @@
+{% extends 'layout.jinja2' %}
+
+{% block content %}
+<div class="content">
+    <h3><span class="font-semi-bold">Приход на склад реактива (речовини, індикатору)</span></h3>
+    <h3><span class="lead font-normal">{{message}}</span></h3>
+    {{ form|safe}}
+</div>
+{% endblock %}

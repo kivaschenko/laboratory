@@ -1,0 +1,50 @@
+{% extends 'layout.jinja2' %}
+
+{% block content %}
+<div class="content">
+<h2><span class="font-semi-bold">Склад речовин</span><br>
+<span class="lead">агреговані суми по кількості, вартості</span></h2>
+<p>{{message}}</p>
+{% if stock_list %}
+<p>Нажміть на кнопку щоб роздрукувати цю сторінку або зберегти в .pdf файл
+	<button onclick=window.print() class="btn btn-primary">Друк</button></p>
+<table id="recipes" class="table table-bordered" style="width:100%">
+  <thead>
+      <tr>
+          <th>Реактив (речовина, індикатор)</th>
+          <th>Од. вим.</th>
+          <th>Кількість</th>
+          <th>Середня ціна, грн.</th>
+          <th>Загальна cума, грн.</th>
+      </tr>
+  </thead>
+  <tbody>
+    {% for item in stock_list %}
+    <tr>
+      <td>{{ item['substance_name'] }}</td>
+			<td>{{ item['measurement'] }}</td>
+      <td>{{ '%0.3f'| format(item['total_amount']|float) }}</td>
+      <td>{{ '%0.2f'|format(item['avg_price']|float) }}</td>
+			<td>{{ '%0.2f'|format(item['sum_cost']|float) }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+</div>
+<script>
+  $(document).ready(function() {
+    $('#recipes').DataTable( {
+      language: {
+          search: "Пошук по таблиці",
+          paginate: {
+            first: "Перша",
+            previous: "Попередня",
+            next: "Наступна",
+            last: "Остання"
+          },
+      }
+    } );
+  } );
+</script>
+{% endblock %}

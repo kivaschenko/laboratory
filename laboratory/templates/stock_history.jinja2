@@ -1,0 +1,58 @@
+{% extends 'layout.jinja2' %}
+
+{% block content %}
+<div class="content">
+<h2><span class="font-semi-bold">Історія складу реактивів</span><br>
+<span class="lead">приходи, розходи</span></h2>
+<p>{{message}}</p>
+{% if history %}
+<p>Нажміть на кнопку щоб роздрукувати цю сторінку або зберегти в .pdf файл
+	<button onclick=window.print() class="btn btn-primary">Друк</button></p>
+<table id="recipes" class="table table-bordered" style="width:100%">
+  <thead>
+      <tr>
+					<th>#</th>
+          <th>Дата</th>
+          <th>Речовина, індикатор</th>
+          <th>Од. вим.</th>
+          <th>приход розход</th>
+					<th>Залишок поточний</th>
+          <th>Ціна, грн.</th>
+          <th>Сума, грн.</th>
+          <th>Примітка</th>
+      </tr>
+  </thead>
+  <tbody>
+    {% for item in history %}
+    <tr>
+			<td>{{ item['id'] }}</td>
+      <td>{{ item['creation_date'] }}</td>
+      <td>{{ item['substance_name'] }}</td>
+			<td>{{ item['measurement'] }}</td>
+			<td>{{'%0.3f'| format(item['amount']|float) }} </td>
+			<td>{{'%0.3f'| format(item['remainder']|float) }}</td>
+			<td>{{'%0.2f'| format(item['price']|float) }}</td>
+			<td>{{'%0.2f'| format(item['total_cost']|float) }}</td>
+			<td>{{ item['notes'] }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+</div>
+<script>
+  $(document).ready(function() {
+    $('#recipes').DataTable( {
+      language: {
+          search: "Пошук по таблиці",
+          paginate: {
+            first: "Перша",
+            previous: "Попередня",
+            next: "Наступна",
+            last: "Остання"
+          },
+      }
+    } );
+  } );
+</script>
+{% endblock %}

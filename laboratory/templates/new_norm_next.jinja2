@@ -1,0 +1,11 @@
+{% extends 'layout.jinja2' %}
+
+{% block content %}
+<div class="content">
+    <h2><span class="lead font-normal">{{ name }}</span></h2>
+    <p class="lead">Введіть кількість рективів у відповідні поля форми та натисніть кнопку для запису в базу даних.</p>
+    <p>{{message}}</p>
+    {{ form.render()|safe}}
+</div>
+
+{% endblock %}

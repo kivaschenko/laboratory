@@ -1,0 +1,33 @@
+{% extends "layout.jinja2" %}
+
+{% block content %}
+<div class="content">
+<h2><span class="font-semi-bold">Каталог реактивів</span></h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Назва</th>
+            <th>Од. виміру</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if subs_list %}
+            {% for subs in subs_list %}
+        <tr>
+            <td>{{ subs['id'] }}</td>
+            <td>{{ subs['name'] }}</td>
+            <td>{{ subs['measurement'] }}</td>
+        </tr>
+            {% endfor %}
+        {% else %}
+        <tr>немає нічого в каталозі</tr>
+        {% endif %}
+    </tbody>
+</table>
+<hr>
+<a href="/substances/edit" class="btn btn-warning">Редагувати каталог</a>
+</div>
+
+{% endblock content %}

@@ -1,8 +1,7 @@
 from sqlalchemy import (
     Column,
     Integer,
-    String,
-    Boolean
+    String
 )
 from .meta import Base
 
@@ -15,5 +14,3 @@ class Substance(Base):
     def __repr__(self):
         return f'<Substance(id={self.id} {self.name} measurement: \
 {self.measurement})>'
-
-

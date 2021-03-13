@@ -10,8 +10,9 @@ def includeme(config):
 
     # normatives and solutions
     config.add_route('new_normative', '/new-normative', factory='laboratory.security.LabFactory')
-    config.add_route('new_norm_next', '/new-norm-next/{name}/{output}/{data}', factory='laboratory.security.LabFactory')
+    config.add_route('new_norm_next', '/new-norm-next/{name}/{type}/{output}/{as_subst}/{data}/{solutions}', factory='laboratory.security.LabFactory')
     config.add_route('normative_list', '/normatives', factory='laboratory.security.LabFactory')
+    config.add_route('delete_normative', '/delete-normative/{norm_id}', factory='laboratory.security.LabFactory')
     config.add_route('solutions', '/solutions', factory='laboratory.security.LabFactory')
     config.add_route('create_solution', '/create_solution/{normative}', factory='laboratory.security.LabFactory')
     config.add_route('aggregate_solution', '/aggregate-solution', factory='laboratory.security.LabFactory')
@@ -32,7 +33,7 @@ def includeme(config):
 
     # statistic
     config.add_route('statistic', '/statistic', factory='laboratory.security.LabFactory')
-    
+
     # authentication
     config.add_route('login', '/login')
     config.add_route('logout', '/logout')

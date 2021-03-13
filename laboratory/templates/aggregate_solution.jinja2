@@ -23,9 +23,9 @@
     <tr>
         <td>{{ item['normative'] }}</td>
 	    <td>{{ item['measurement'] }}</td>
-        <td>{{ '%0.2f'| format(item['total_amount']|float) }}</td>
-        <td>{{ '%0.2f'| format(item['avg_price']|float) }}</td>
-		<td>{{ '%0.2f'| format(item['sum_cost']|float) }}</td>
+        <td>{{ '%0.3f'| format(item['total_amount']|float) }}</td>
+        <td>{{ '%0.3f'| format(item['avg_price']|float) }}</td>
+		<td>{{ '%0.3f'| format(item['sum_cost']|float) }}</td>
     </tr>
     {% endfor %}
   </tbody>

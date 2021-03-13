@@ -2,9 +2,14 @@
 
 {% block content %}
 <div class="content">
-    <h2><span class="lead font-normal">{{ name }}</span></h2>
+    <h2><span class="lead font-normal">{{ name_solution }}</span></h2>
     <p class="lead">Введіть кількість рективів у відповідні поля форми та натисніть кнопку для запису в базу даних.</p>
     <p>{{message}}</p>
+    <h3>Назва: <span class="font-semi-bold">{{name_solution}}</span></h3>
+    <h3>Тип: <span class="font-semi-bold">{{s_type}}</<span></h3>
+    <h3>Використовується як компонент іншого розчину: <span class="font-semi-bold">
+      {% if as_subst %}Так{% else %}Ні{%endif%}</span></h3>
+    <h3>Вихід: <span class="font-semi-bold">{{output}} {{measurement}}</<span></h3>
     {{ form.render()|safe}}
 </div>
 

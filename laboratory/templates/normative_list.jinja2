@@ -1,43 +1,96 @@
 {% extends 'layout.jinja2' %}
 
-
 {% block content %}
 <div class="content">
-<a href="/new-normative" class="btn btn-default">Новий рецепт розчину</a>
+<a href="/new-normative" class="btn btn-default">Новий рецепт</a>
 <hr>
-  <h1><span class="font-semi-bold">Рецепти розчинів</span></h1>
-  <p class="lead"><span class="font-normal">Перелік за назвами</span>, кнопка для створення нових<br>
-  Щоб додати новий рецепт - натисніть кнопку зверху.</p>
+  <h2><span class="font-semi-bold">Рецепти розчинів і сумішей</span></h2>
+  <p class="lead">Перелік за назвами, кнопка для створення нових.  Щоб додати новий рецепт - натисніть кнопку зверху.</p>
 {% if normative_list %}
+<h2><span class="font-normal">Розчини</h2>
+  <hr>
  <table class="table">
   	<thead>
   		<tr>
   			<th>#</th>
-  			<th>назва розчину</th>
-  			<th>вихід, мл</th>
-			<th>компоненти</th>
-			<th>Дія</th>
+  			<th>назва</th>
+  			<th>вихід</th>
+  			<th>компоненти</th>
+        <th>розчини</th>
+        <th>видалити</th>
   		</tr>
   	</thead>
   	<tbody>
-
-  			{% for norm in normative_list %}
+		{% for norm in normative_list %}
+      {% if norm['type'] == 'solution' %}
   		<tr>
   			<td>{{norm['id']}}</td>
-  			<td>{{norm['name']}}</td>
-  			<td>{{norm['output']}}</td>
+  			<td><p class="lead"><span class="font-normal">{{norm['name']}}  </span></p>
+          {% if norm['as_subst'] %}
+          <p><em>(використовується як компонент іншого розчину)</em></p>{% endif %}
+          <p><a href="/create_solution/{{norm['name']}}" class="btn btn-success">Зробити розчин</a></p>
+        </td>
+  			<td>{{ '%0.3f'| format(norm['output']|float) }} мл</td>
         <td>
           {% for k,v in norm['data'].items() %}
             <ul>
               <li><strong>{{k}}: </strong>{{v}}</li>
             </ul>
           {% endfor %}
-		</td>
-		<td><a href="/create_solution/{{norm['name']}}" class="btn btn-success">Зробити розчин</a></td>
+		    </td>
+        <td>
+          {% if norm['solutions'] %}
+          {% for k,v in norm['solutions'].items() %}
+          <ul>
+            <li><strong>{{k}}: </strong>{{v}}</li>
+          </ul>
+          {% endfor %}
+          {% else %}
+          не використовує готові розчини
+          {% endif %}
+        </td>
+        <td><a href="/delete-normative/{{norm['id']}}" class="btn btn-danger"><i class="glyphicon glyphicon-trash"></i> </a></td>
   		</tr>
-  			{% endfor %}
+      {% endif %}
+		{% endfor %}
   	</tbody>
   </table>
+
+  <h2><span class="font-normal">Суміші</h2>
+    <hr>
+   <table class="table">
+    	<thead>
+    		<tr>
+    			<th>#</th>
+    			<th>назва</th>
+    			<th>вихід</th>
+    			<th>компоненти</th>
+          <th>видалити</th>
+    		</tr>
+    	</thead>
+    	<tbody>
+  		{% for norm in normative_list %}
+        {% if norm['type'] == 'mixture' %}
+    		<tr>
+    			<td>{{norm['id']}}</td>
+    			<td><p class="lead"><span class="font-normal">{{norm['name']}}  </span></p>
+            <p><a href="#" class="btn btn-success">Зробити суміш</a></p>
+          </td>
+    			<td>{{ '%0.3f'| format(norm['output']|float) }} г</td>
+          <td>
+            {% for k,v in norm['data'].items() %}
+              <ul>
+                <li><strong>{{k}}: </strong>{{v}}</li>
+              </ul>
+            {% endfor %}
+  		    </td>
+          <td><a href="/delete-normative/{{norm['id']}}" class="btn btn-danger"><i class="glyphicon glyphicon-trash"></i> </a></td>
+    		</tr>
+        {% endif %}
+  		{% endfor %}
+    	</tbody>
+    </table>
+
 {% else %}
 <p>Немає рецептів поки що...</p>
 {% endif %}

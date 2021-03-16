@@ -387,8 +387,20 @@ def make_new_solution(request):
     current_normative = request.dbsession.query(models.Normative).\
         filter(models.Normative.name==normative_name).first()
     current_normative = current_normative.__dict__
-    output = current_normative['output']
+    current_measurement = ''
+    curr_notes = ''
+    if current_normative['type'] == 'solution':
+        current_measurement = 'мл'
+        curr_notes = f'Створено розчин {normative_name}'
+    elif current_normative['type'] == 'mixture':
+        current_measurement = 'г'
+        curr_notes = f'Створено суміш {normative_name}'
+    output = current_normative['output'].__float__()
     data_dict = json.loads(current_normative['data'])
+    if isinstance(current_normative['solutions'], str):
+        solutions = json.loads(current_normative['solutions'])
+    else:
+        solutions = None
     class SolutionSchema(CSRFSchema):
         amount = colander.SchemaNode(colander.Decimal(),
             validator=colander.Range(
@@ -412,7 +424,7 @@ def make_new_solution(request):
             validator=colander.OneOf([x[0] for x in (('мл','мл'), ('г','г'))]),
             widget=deform.widget.RadioChoiceWidget(
                 values=(('мл', 'мл'), ('г', 'г')), inline=True),
-            title="Одиниця виміру", )
+            title="Одиниця виміру", default=current_measurement)
         created_at = colander.SchemaNode(colander.Date(),
            validator=colander.Range(
            min=datetime.date(datetime.date.today().year, 1, 1),
@@ -429,7 +441,7 @@ def make_new_solution(request):
            )
         notes = colander.SchemaNode(colander.String(),
             title="Примітка",
-            missing='', default='Створено новий розчин',
+            missing='', default='Створено новий розчин/суміш',
             validator=colander.Length(max=600),
             widget=deform.widget.TextAreaWidget(rows=5, cols=60),
             description="Необов'язково, до 600 символів з пробілами",)
@@ -443,13 +455,14 @@ def make_new_solution(request):
             created_at = appstruct['created_at']
             due_date = appstruct['due_date']
             notes = appstruct['notes']
-            amount = appstruct['amount']
+            amount = appstruct['amount'].__float__()
             measurement = appstruct['measurement']
             coef = 1
             if amount != output:
                 coef = amount / output
             if isinstance(coef, decimal.Decimal):
                 coef = float(coef)
+            # start handling substances quantity
             new_data = {
                 key: -value * coef for key, value in data_dict.items()
             }
@@ -459,7 +472,8 @@ def make_new_solution(request):
                         substances_from_data)).all()
             if len(query_stock) == 0:
                 message = f'На складі відсутні всі компоненти!'
-                return {'form': form, 'message': message, 'normative': normative_name}
+                return {'form': form, 'message': message,
+                        'normative': normative_name}
             else:
                 substances_dicts = [qs.__dict__ for qs in query_stock]
                 df = pd.DataFrame.from_records(substances_dicts)
@@ -471,8 +485,10 @@ def make_new_solution(request):
             if len(missing) > 0:
                 missing_string = ' '.join(missing)
                 message = f'Відсутні залишки: {missing_string}'
-                return {'form': form, 'message': message, 'normative': normative_name}
+                return {'form': form, 'message': message,
+                        'normative': normative_name}
             new_records = []
+            substances_cost = {}
             for key, value in new_data.items():
                 df_key = df[df.substance_name==key]
                 subs_measurement = df_key['measurement'].values[0]
@@ -482,7 +498,7 @@ def make_new_solution(request):
                 subs_price = df_key['total_cost'].sum() / df_key['amount'].sum()
                 subs_price = subs_price.__float__()
                 subs_total_cost = subs_price * value
-                subs_notes = f'Створено розчин {normative_name}'
+                subs_notes = curr_notes
                 new_stock = models.Stock(
                     substance_name=key,
                     measurement=subs_measurement,
@@ -495,14 +511,65 @@ def make_new_solution(request):
                 )
                 new_records.append(new_stock)
                 # define cost for each substance in this solution:
-                new_data[key] = subs_total_cost
+                substances_cost[key] = subs_total_cost
             for record in new_records:
                 request.dbsession.add(record)
-            # count price and cost of the new solution
-            solution_cost = 0
-            for cost in new_data.values():
-                solution_cost += -cost
-            solution_price = round(solution_cost / amount, 2)
+            total_substances_cost = [v for v in substances_cost.values()]
+            total_substances_cost = sum(total_substances_cost) * -1
+            # finish handling substances
+            # start handling solutions quantity
+            if solutions is None:
+                total_solutions_cost = 0
+            else:
+                solutions_quantity = {
+                    key: -value * coef for key, value in solutions.items()
+                }
+                solutions_names = [*solutions.keys()]
+                query_solutions = request.dbsession.query(models.Solution).\
+                                filter(models.Solution.normative.in_(
+                                solutions_names)).all()
+                if len(query_solutions) == 0:
+                    message = f'Немає готових розчинів для цього аналізу.'
+                    return {'form': form, 'message': message,
+                            'normative': normative_name}
+                else:
+                    query_solutions_dicts = [qs.__dict__ for qs in query_solutions]
+                    df2 = pd.DataFrame.from_records(query_solutions_dicts)
+                got_solutions = df2['normative'].unique().tolist()
+                missing = set(solutions_names) - set(got_solutions)
+                if len(missing) > 0:
+                    missing_string = ' '.join(missing)
+                    message = f'Відсутні залишки: {missing_string}'
+                    return {'form': form, 'message': message,
+                            'normative': normative_name}
+                insert_into_solutions = []
+                solutions_cost = {}
+                for key, value in solutions_quantity.items():
+                    df2_key = df2[df2.normative==key]
+                    sol_measurement = df2_key['measurement'].values[0]
+                    sol_remainder = df2_key['amount'].sum()
+                    sol_remainder = sol_remainder.__float__()
+                    new_remainder = sol_remainder + value
+                    avg_price = df2_key['total_cost'].sum() / df2_key['amount'].sum()
+                    avg_price = avg_price.__float__()
+                    sol_total_cost = avg_price * value
+                    sol_notes = curr_notes
+                    new_solution = models.Solution(
+                        normative=key,
+                        measurement=sol_measurement,
+                        amount=value,
+                        remainder=new_remainder,
+                        price=avg_price,
+                        total_cost=sol_total_cost,
+                        created_at=datetime.date.today(),
+                        notes=sol_notes,
+                        recipe=normative_name
+                    )
+                    insert_into_solutions.append(new_solution)
+                    solutions_cost[key] = sol_total_cost
+                total_solutions_cost = [v for v in solutions_cost.values()]
+                total_solutions_cost = sum(total_solutions_cost) * -1
+            solution_price = round((total_substances_cost + total_solutions_cost) / amount, 2)
             last_remainder = 0
             get_remainder = request.dbsession.query(models.Solution.remainder).\
                           filter(models.Solution.normative==normative_name).\
@@ -516,7 +583,7 @@ def make_new_solution(request):
                 amount=amount,
                 remainder=last_remainder + amount,
                 price=solution_price,
-                total_cost=solution_cost,
+                total_cost=total_substances_cost + total_solutions_cost,
                 created_at=created_at,
                 due_date=due_date,
                 notes=notes
@@ -591,7 +658,6 @@ def new_normative(request):
     if len(solut_query) > 0:
         solut_list = [q.__dict__ for q in solut_query]
     choices_soluttions = [(solut['id'], solut['name']) for solut in solut_list]
-
     class NormativeSchema(CSRFSchema):
         name = colander.SchemaNode(colander.String(), title="Назва розчину")
         type = colander.SchemaNode(colander.String(),
@@ -1039,6 +1105,7 @@ def add_done_analysis(request):
                 )
                 insert_into_stock.append(new_stock)
                 substances_cost[key] = subs_total_cost
+            # handling solutions
             solutions_quantity = {
                 key: -value * quantity for key, value in solutions.items()
             }

@@ -8,7 +8,7 @@
 {% if solutions %}
 <p>Нажміть на кнопку щоб роздрукувати цю сторінку або зберегти в .pdf файл
 	<button onclick=window.print() class="btn btn-primary">Друк</button></p>
-<table id="recipes" class="table table-bordered" style="width:100%">
+<table id="recipes" class="table table-stripped" style="width:100%">
   <thead>
     <tr>
 			<th>#</th>
@@ -47,6 +47,7 @@
 <script>
   $(document).ready(function() {
     $('#recipes').DataTable( {
+			order: [[0, 'desc'],],
       language: {
           search: "Пошук по таблиці",
           paginate: {

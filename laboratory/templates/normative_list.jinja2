@@ -74,7 +74,7 @@
     		<tr>
     			<td>{{norm['id']}}</td>
     			<td><p class="lead"><span class="font-normal">{{norm['name']}}  </span></p>
-            <p><a href="#" class="btn btn-success">Зробити суміш</a></p>
+            <p><a href="/create_solution/{{norm['name']}}" class="btn btn-success">Зробити суміш</a></p>
           </td>
     			<td>{{ '%0.3f'| format(norm['output']|float) }} г</td>
           <td>

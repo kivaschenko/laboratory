@@ -42,7 +42,7 @@
     <div class="starter-template">
       <div class="container">
         <div class="row">
-          <div class="col-md-3">
+          <div class="col-md-2">
             <img class="logo img-responsive" src="{{request.static_url('laboratory:static/pyramid.png') }}" alt="logo">
             <div class="nav-menu links">
               <ul>
@@ -67,13 +67,14 @@
                 {% if request.user %}
                 <li><i class="glyphicon glyphicon-user icon-muted"></i> {{ request.user.nickname }}</li>
                 <li><i class="glyphicon glyphicon-log-out icon-muted"></i><a href="/logout"> Вийти</a></li>
+                <li><i class="glyphicon glyphicon-erase icon-muted"></i><a href="/change-passw"> Змінити пароль</a></li>
                 {% else %}
                 <li><i class="glyphicon glyphicon-log-in icon-muted"></i><a href="/login"> Зайти</a></li>
                 {% endif %}
               </ul>
             </div>
           </div>
-          <div class="col-md-8">
+          <div class="col-md-10">
             {% block content %}
                 <p>No content</p>
             {% endblock content %}

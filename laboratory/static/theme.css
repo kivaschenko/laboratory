@@ -156,17 +156,11 @@ p {
     margin-top: 20px;
   }
 }
-/* new */
-.starter-template .nav-menu {{
-    margin-top: 40px;
-    padding: 0;
-    list-style: none;
-}
 
 .glyphicon {
     position: relative;
     top: 1px;
-    display: block;
+    display: inline;
     font-family: 'Glyphicons Halflings';
     font-style: normal;
     font-weight: 400;

@@ -29,7 +29,7 @@ def login(request):
             default=csrf_token,
             validator=validate_csrf,
             widget=deform.widget.HiddenWidget()
-    )   
+    )
     class LoginSchema(CSRFSchema):
         username = colander.SchemaNode(
                 colander.String(),
@@ -71,3 +71,41 @@ def logout(request):
 def forbidden_view(request):
     next_url = request.route_url('login', _query={'next': request.url})
     return HTTPFound(location=next_url)
+
+@view_config(route_name='change_passw',
+             renderer='../templates/change_passw.jinja2')
+def change_password(request):
+    message = ''
+    next_url = request.route_url('logout')
+    csrf_token = request.session.get_csrf_token()
+    def validate_csrf(node, value):
+        if value != csrf_token:
+            raise ValueError("Bad CSRF token")
+    class CSRFSchema(colander.Schema):
+        csrf = colander.SchemaNode(
+            colander.String(),
+            default=csrf_token,
+            validator=validate_csrf,
+            widget=deform.widget.HiddenWidget()
+        )
+    class ChangePasswSchema(CSRFSchema):
+        password = colander.SchemaNode(
+            colander.String(),
+            validator=colander.Length(min=6),
+            widget=deform.widget.CheckedPasswordWidget(redisplay=True),
+            description="введіть новий пароль та підтвердіть його",
+            title="Новий пароль"
+        )
+    schema = ChangePasswSchema()
+    form = deform.Form(schema, buttons=('submit',))
+    if 'submit' in request.POST:
+        controls = request.POST.items()
+        user = request.user
+        try:
+            appstruct = form.validate(controls)
+            user.set_password(appstruct['password'])
+            request.dbsession.add(user)
+            return HTTPFound(next_url)
+        except ValidationFailure as e:
+            return {'form': e, 'message': message}
+    return {'form': form, 'message': message}

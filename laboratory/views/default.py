@@ -278,56 +278,6 @@ def get_aggregate_stock(request):
     return {'stock_list': stock_, 'message': message}
 
 
-# @view_config(route_name='inventory', renderer='../templates/inventory.jinja2',
-#              permission='create')
-# def make_inventory(request):
-#     message = ''
-#     textual_sql = '''
-#         SELECT stock.substance_name AS name,
-#             stock.measurement AS measurement,
-#             SUM (stock.amount) AS amount
-#         FROM stock
-#         GROUP BY name, measurement ORDER BY name'''
-#     class InventorySchema(colander.Schema):
-#         notes = colander.SchemaNode(colander.String(),
-#             title="Примітка",
-#             missing='', default='Проведено інвентаризацію залишків по складу',
-#             validator=colander.Length(max=600),
-#             widget=deform.widget.TextAreaWidget(rows=5, cols=60),
-#             description="Необов'язково, до 600 символів з пробілами",)
-#         def after_bind(self, schema, kwargs):
-#             subs_list = request.dbsession.execute(textual_sql).fetchall()
-#             # subs_list = [sq.__dict__ for sq in query]
-#             for subs in subs_list:
-#                 self[subs['name']] = colander.SchemaNode(colander.Decimal(),
-#                     title=subs["name"] + ', ' + subs["measurement"],
-#                     default=subs['amount'].__float__(),
-#                     description='введіть реальну кількість, якщо вона інша',
-#                     validator=colander.Range(
-#                         min=-decimal.Decimal("999999.999"),
-#                         max=decimal.Decimal("999999.999")
-#                         ),
-#                     widget=deform.widget.TextInputWidget(
-#                         attributes={
-#                             "type": "number",
-#                             "inputmode": "decimal",
-#                             "step": "0.001",
-#                             "min": "0",
-#                             "max": "999999.999"
-#                         })
-#                     )
-#     schema = InventorySchema().bind(request=request)
-#     button = deform.form.Button(name='submit', type='submit', title="Зробити")
-#     form = deform.Form(schema, buttons=(button,))
-#     if 'submit' in request.POST:
-#         controls = request.POST.items()
-#         try:
-#             appstruct = form.validate(controls)
-#         except ValidationFailure as e:
-#             return {'message':'Помилки у формі вводу даних', 'form': e}
-#     return {'form':form, 'message':message}
-
-
 #=======================
 # SOLUTIONS
 @view_config(route_name='aggregate_solution', permission='create',
@@ -619,6 +569,26 @@ def get_all_normatives(request):
     return {'message': message, 'normative_list': normative_list}
 
 
+@view_config(route_name='normative_edit', permission='edit',
+             renderer='../templates/normative_edit.jinja2')
+def edit_normatives(request):
+    message = ''
+    normative_query = request.dbsession.query(models.Normative).order_by(
+                    models.Normative.name).all()
+    normative_list = []
+    if len(normative_query) > 0:
+        normative_list = [nq.__dict__ for nq in normative_query]
+        for norm in normative_list:
+            norm['data'] = json.loads(norm['data'])
+            if isinstance(norm['solutions'], str):
+                norm['solutions'] = json.loads(norm['solutions'])
+            else:
+                norm['solutions'] = {}
+    else:
+        message = 'Немає нормативів у списку.'
+    return {'message': message, 'normative_list': normative_list}
+
+
 @view_config(route_name='delete_normative', permission='edit')
 def delete_normative(request):
     norm_id = request.matchdict['norm_id']
@@ -859,6 +829,26 @@ def all_recipes(request):
     return {'recipes': query, 'message': message}
 
 
+@view_config(route_name="recipes_edit", 
+    renderer='../templates/recipes_edit.jinja2', permission='read')
+def edit_recipes(request):
+    message = ''
+    query = request.dbsession.query(models.Recipe.id, models.Recipe.name)\
+            .order_by(models.Recipe.name).all()
+    if len(query) == 0:
+        message = 'Немає доданих рецептів аналізів.'
+    return {'recipes': query, 'message': message}
+
+
+@view_config(route_name="delete_recipe", permission='edit')
+def delete_recipe(request):
+    recipe_id = request.matchdict['recipe_id']
+    recipe = request.dbsession.query(models.Recipe).get(recipe_id)
+    request.dbsession.delete(recipe)
+    next_url = request.route_url('recipes')
+    return HTTPFound(location=next_url)
+
+
 @view_config(route_name='recipe_details', permission='read',
              renderer='../templates/recipe_details.jinja2')
 def recipe_details(request):
@@ -866,11 +856,11 @@ def recipe_details(request):
     try:
         query = request.dbsession.query(models.Recipe).get(id_recipe)
         recipe = query.__dict__
-        recipe['substances'] = json.loads(recipe['substances'])
-        recipe['solutions'] = json.loads(recipe['solutions'])
-        return dict(
-            recipe=recipe
-        )
+        if len(recipe['substances']) > 0:
+            recipe['substances'] = json.loads(recipe['substances'])
+        if len(recipe['solutions']) > 0:
+            recipe['solutions'] = json.loads(recipe['solutions'])
+        return {'recipe':recipe}
     except DBAPIError:
         return Response(db_err_msg, content_type='text/plain', status=500)
     return {'recipe': recipe}
@@ -950,49 +940,50 @@ def new_recipe_next(request):
         def after_bind(self, schema, kwargs):
             req = kwargs['request']
             substances = req.matchdict['substances']
-            substances = substances.lstrip("{'").rstrip("'}").split("', '")
-            list_subs_id = [int(d) for d in substances]
-            subs_query = request.dbsession.query(models.Substance)\
-                       .filter(models.Substance.id.in_(list_subs_id)).all()
-            subs_list = [sq.__dict__ for sq in subs_query]
-            for subs in subs_list:
-                self[subs['name']] = colander.SchemaNode(
-                    colander.Decimal(),
-                    title=subs["name"] + ', ' + subs["measurement"],
-                    default=0.001,
-                    validator=colander.Range(min=0, max=decimal.Decimal("999999.999")),
-                    widget=deform.widget.TextInputWidget(attributes={
-                        "type": "number",
-                        "inputmode": "decimal",
-                        "step": "0.001",
-                        "min": "0",
-                        "max": "999999.999"
-                    })
-                )
+            if substances != 'set()':
+                substances = substances.lstrip("{'").rstrip("'}").split("', '")
+                list_subs_id = [int(d) for d in substances]
+                subs_query = request.dbsession.query(models.Substance)\
+                           .filter(models.Substance.id.in_(list_subs_id)).all()
+                subs_list = [sq.__dict__ for sq in subs_query]
+                for subs in subs_list:
+                    self[subs['name']] = colander.SchemaNode(
+                        colander.Decimal(),
+                        title=subs["name"] + ', ' + subs["measurement"],
+                        default=0.001,
+                        validator=colander.Range(min=0, max=decimal.Decimal("999999.999")),
+                        widget=deform.widget.TextInputWidget(attributes={
+                            "type": "number",
+                            "inputmode": "decimal",
+                            "step": "0.001",
+                            "min": "0",
+                            "max": "999999.999"
+                        })
+                    )
             solutions = req.matchdict['solutions']
-            solutions = solutions.lstrip("{'").rstrip("'}").split("', '")
-            list_solut_id = [int(d) for d in solutions]
-            solut_query = request.dbsession.query(models.Normative)\
-                        .filter(models.Normative.id.in_(list_solut_id)).all()
-            solut_list = [st.__dict__ for st in solut_query]
-            for solut in solut_list:
-                self[solut['name']] = colander.SchemaNode(
-                    colander.Decimal(),
-                    title=solut['name'] + ', мл',
-                    default=0.001,
-                    validator=colander.Range(min=0, max=decimal.Decimal("999999.999")),
-                    widget=deform.widget.TextInputWidget(attributes={
-                        "type": "number",
-                        "inputmode": "decimal",
-                        "step": "0.001",
-                        "min": "0",
-                        "max": "999999.999"
-                    })
-                )
+            if solutions != 'set()':
+                solutions = solutions.lstrip("{'").rstrip("'}").split("', '")
+                list_solut_id = [int(d) for d in solutions]
+                solut_query = request.dbsession.query(models.Normative)\
+                            .filter(models.Normative.id.in_(list_solut_id)).all()
+                solut_list = [st.__dict__ for st in solut_query]
+                for solut in solut_list:
+                    self[solut['name']] = colander.SchemaNode(
+                        colander.Decimal(),
+                        title=solut['name'] + ', мл',
+                        default=0.001,
+                        validator=colander.Range(min=0, max=decimal.Decimal("999999.999")),
+                        widget=deform.widget.TextInputWidget(attributes={
+                            "type": "number",
+                            "inputmode": "decimal",
+                            "step": "0.001",
+                            "min": "0",
+                            "max": "999999.999"
+                        })
+                    )
     schema = NextRecipeSchema().bind(request=request)
     button = deform.form.Button(name='submit', title='Створити новий аналіз', type='submit')
     form = deform.Form(schema, buttons=(button,))
-    # appstruct = {'name': name_analysis}
     subst_names = [s[0] for s in request.dbsession.query(models.Substance.name).all()]
     if 'submit' in request.POST:
         controls = request.POST.items()
@@ -1009,8 +1000,14 @@ def new_recipe_next(request):
                     substances[key] = float(value)
                 else:
                     solutions[key] = float(value)
-            substances = json.dumps(substances)
-            solutions = json.dumps(solutions)
+            if len(substances) > 0:
+                substances = json.dumps(substances)
+            else:
+                substances = ''
+            if len(solutions) > 0:
+                solutions = json.dumps(solutions)
+            else:
+                solutions = ''
             new_recipe = models.Recipe(
                                 name=new_name,
                                 substances=substances,
@@ -1185,6 +1182,7 @@ def analysis_history(request):
     except DBAPIError:
         message = db_err_msg
     return {'analysises': analysises, 'massage': message}
+
 
 #===========================
 # STATISTIC

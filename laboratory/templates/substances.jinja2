@@ -2,8 +2,9 @@
 
 {% block content %}
 <div class="content">
-<h2><span class="font-semi-bold">Каталог реактивів</span></h2>
-
+<a href="/substances/edit" class="btn btn-warning">Редагувати каталог</a>
+<hr>
+<h1><span class="font-semi-bold">Каталог реактивів</span></h1>
 <table class="table">
     <thead>
         <tr>
@@ -26,8 +27,6 @@
         {% endif %}
     </tbody>
 </table>
-<hr>
-<a href="/substances/edit" class="btn btn-warning">Редагувати каталог</a>
 </div>
 
 {% endblock content %}

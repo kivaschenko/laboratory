@@ -1,0 +1,49 @@
+{% extends 'layout.jinja2' %}
+
+{% block content %}
+<div class="content">
+  <a href="/new-recipe" class="btn btn-default">Створити новий норматив аналізу</a>
+  <a href="/recipes" class="btn btn-info">Назад в каталог</a>
+  <hr>
+  <h1><span class="font-semi-bold ">Нормативи аналізів</span></h1>
+  <p>{{message}}</p>
+  {% if recipes %}
+  <table id="recipes" class="table table-bordered" style="width:100%">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Назва аналізу</th>
+            <th>Детальніше</th>
+            <th>Видалити</th>
+        </tr>
+    </thead>
+    <tbody>
+      {% for r in recipes %}
+      <tr>
+        <td>{{ r.0 }}</td>
+        <td>{{ r.1 }}</td>
+        <td><a href="/resipe-details/{{r.0}}" class="btn btn-info">Повний рецепт</a></td>
+        <td><a href="/delete-recipe/{{r.0}}" class="btn btn-danger">
+            <i class="glyphicon glyphicon-trash icon-muted"></i></a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+<script>
+  $(document).ready(function() {
+    $('#recipes').DataTable( {
+      language: {
+          search: "Пошук по таблиці",
+          paginate: {
+            first: "Перша",
+            previous: "Попередня",
+            next: "Наступна",
+            last: "Остання"
+          },
+      }
+    } );
+  } );
+</script>
+{% endblock %}

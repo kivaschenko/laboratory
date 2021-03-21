@@ -149,15 +149,12 @@ p {
     display: block;
     margin: 0;
   }
-  .starter-template .links ul li .icon-muted {
-    display: none;
-  }
   .starter-template .copyright {
     margin-top: 20px;
   }
 }
 
-.glyphicon {
+/*.glyphicon {
     position: relative;
     top: 1px;
     display: inline;
@@ -168,4 +165,4 @@ p {
     color: limegreen;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-}
+}*/

@@ -2,11 +2,10 @@
 
 {% block content %}
 <div class="content">
-<a href="/normatives/edit" class="btn btn-warning"> Редагувати каталог</a>
-<hr>
-  <h1><span class="font-semi-bold">Рецепти розчинів і сумішей</span></h1>
-  <p class="lead">Перелік за назвами, кнопка для створення нових.  Щоб додати новий рецепт
-  або видалити непотрібний - натисніть кнопку зверху.</p>
+  <h1>Редагувати каталог</h1>
+  <h2><span class="font-semi-bold">Рецепти розчинів і сумішей</span>
+    <a href="/new-normative" class="btn btn-default">Новий рецепт</a>
+    <a href="/normatives" class="btn btn-info"> Назад в каталог</a></h2>
 {% if normative_list %}
 <h2><span class="font-normal">Розчини</h2>
   <hr>
@@ -18,6 +17,7 @@
   			<th>вихід</th>
   			<th>компоненти</th>
         <th>розчини</th>
+        <th>видалити</th>
   		</tr>
   	</thead>
   	<tbody>
@@ -28,7 +28,6 @@
   			<td><p class="lead"><span class="font-normal">{{norm['name']}}  </span></p>
           {% if norm['as_subst'] %}
           <p><em>(використовується як компонент іншого розчину)</em></p>{% endif %}
-          <p><a href="/create_solution/{{norm['name']}}" class="btn btn-success">Зробити розчин</a></p>
         </td>
   			<td>{{ '%0.3f'| format(norm['output']|float) }} мл</td>
         <td>
@@ -49,6 +48,8 @@
           не використовує готові розчини
           {% endif %}
         </td>
+        <td><a href="/delete-normative/{{norm['id']}}" class="btn btn-danger">
+          <i class="glyphicon glyphicon-trash icon-muted"></i></a></td>
   		</tr>
       {% endif %}
 		{% endfor %}
@@ -64,6 +65,7 @@
     			<th>назва</th>
     			<th>вихід</th>
     			<th>компоненти</th>
+          <th>видалити</th>
     		</tr>
     	</thead>
     	<tbody>
@@ -72,7 +74,6 @@
     		<tr>
     			<td>{{norm['id']}}</td>
     			<td><p class="lead"><span class="font-normal">{{norm['name']}}  </span></p>
-            <p><a href="/create_solution/{{norm['name']}}" class="btn btn-success">Зробити суміш</a></p>
           </td>
     			<td>{{ '%0.3f'| format(norm['output']|float) }} г</td>
           <td>
@@ -82,11 +83,14 @@
               </ul>
             {% endfor %}
   		    </td>
+          <td><a href="/delete-normative/{{norm['id']}}" class="btn btn-danger">
+            <i class="glyphicon glyphicon-trash icon-muted"></i></a></td>
     		</tr>
         {% endif %}
   		{% endfor %}
     	</tbody>
     </table>
+
 {% else %}
 <p>Немає рецептів поки що...</p>
 {% endif %}

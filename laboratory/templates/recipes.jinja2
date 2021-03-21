@@ -2,7 +2,9 @@
 
 {% block content %}
 <div class="content">
-<h1><span class="font-semi-bold ">Список рецептів аналізів (досліджень)</span></h1>
+<a href="/recipes/edit" class="btn btn-warning">Редагувати каталог</a>
+<hr>
+<h1><span class="font-semi-bold ">Нормативи аналізів</span></h1>
 <p>{{message}}</p>
 {% if recipes %}
 <table id="recipes" class="table table-bordered" style="width:100%">
@@ -11,7 +13,7 @@
           <th>#</th>
           <th>Назва аналізу</th>
           <th>Детальніше</th>
-          <th>Дії</th>
+          <th>Виконати</th>
       </tr>
   </thead>
   <tbody>
@@ -20,13 +22,12 @@
       <td>{{ r.0 }}</td>
       <td>{{ r.1 }}</td>
       <td><a href="/resipe-details/{{r.0}}" class="btn btn-info">Повний рецепт</a></td>
-      <td><a href="/add-analysis/{{r.0}}" class="btn btn-danger">Виконати аналіз</a></td>
+      <td><a href="/add-analysis/{{r.0}}" class="btn btn-success">Виконати аналіз</a></td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
 {% endif %}
-<a href="/new-recipe" class="btn btn-default">Створити новий норматив аналізу</a>
 </div>
 <script>
   $(document).ready(function() {

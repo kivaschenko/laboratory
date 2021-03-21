@@ -43,27 +43,27 @@
       <div class="container">
         <div class="row">
           <div class="col-md-2">
-            <img class="logo img-responsive" src="{{request.static_url('laboratory:static/pyramid.png') }}" alt="logo">
+            <img class="logo img-responsive" src="{{request.static_url('laboratory:static/pyramid.png') }}" alt="logo" style="max-height: 150px; max-width: 150px;">
             <div class="nav-menu links">
               <ul>
                 <li><i class="glyphicon glyphicon-home icon-muted"></i><a href="/"> Головна сторінка</a></li>
-                <h3>Склад</h3>
+                <h4>Склад</h4>
                 <li><i class="glyphicon glyphicon-barcode icon-muted"></i><a href="/substances"> Реактиви каталог</a></li>
                 <li><i class="glyphicon glyphicon-piggy-bank icon-muted"></i><a href="/stock"> Склад</a></li>
                 <li><i class="glyphicon glyphicon-plus icon-muted"></i><a href="/buy-substance"> Приход на склад</a></li>
                 <li><i class="glyphicon glyphicon-list-alt icon-muted"></i><a href="/stock-history"> Історія руху по складу</a></li>
                 <hr>
-                <h3>Розчини і суміші</h3>
+                <h4>Розчини і суміші</h4>
                 <li><i class="glyphicon glyphicon-glass icon-muted"></i><a href="/normatives"> Рецепти</a></li>
                 <li><i class="glyphicon glyphicon-th-list icon-muted"></i><a href="/solutions"> Журнал</a></li>
                 <li><i class="glyphicon glyphicon-tint icon-muted"></i><a href="/aggregate-solution"> Залишки</a></li>
                 <hr>
-                <h3>Аналізи</h3>
+                <h4>Аналізи</h4>
                 <li><i class="glyphicon glyphicon-book icon-muted"></i><a href="/recipes"> Нормативи аналізів</a></li>
                 <li><i class="glyphicon glyphicon-search icon-muted"></i><a href="/analysis-done"> Виконані аналізи</a></li>
                 <li><i class="glyphicon glyphicon-th-list icon-muted"></i><a href="/statistic"> Статистика витрат</a></li>
                 <hr>
-                <h3>Авторизація</h3>
+                <h4>Авторизація</h4>
                 {% if request.user %}
                 <li><i class="glyphicon glyphicon-user icon-muted"></i> {{ request.user.nickname }}</li>
                 <li><i class="glyphicon glyphicon-log-out icon-muted"></i><a href="/logout"> Вийти</a></li>
@@ -71,6 +71,7 @@
                 {% else %}
                 <li><i class="glyphicon glyphicon-log-in icon-muted"></i><a href="/login"> Зайти</a></li>
                 {% endif %}
+                <hr>
               </ul>
             </div>
           </div>

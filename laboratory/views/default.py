@@ -829,7 +829,7 @@ def all_recipes(request):
     return {'recipes': query, 'message': message}
 
 
-@view_config(route_name="recipes_edit", 
+@view_config(route_name="recipes_edit",
     renderer='../templates/recipes_edit.jinja2', permission='read')
 def edit_recipes(request):
     message = ''
@@ -1036,10 +1036,15 @@ def add_done_analysis(request):
         csrf = colander.SchemaNode(colander.String(), default=csrf_token,
              validator=validate_csrf, widget=deform.widget.HiddenWidget())
     id_recipe = request.matchdict['id_recipe']
-    recipe = request.dbsession.query(models.Recipe).get(id_recipe)
-    recipe_name = recipe.name
-    substances = json.loads(recipe.substances)
-    solutions = json.loads(recipe.solutions)
+    query = request.dbsession.query(models.Recipe).get(id_recipe)
+    recipe = query.__dict__
+    recipe_name = recipe['name']
+    substances = ''
+    solutions = ''
+    if len(recipe['substances']) > 0:
+        substances = json.loads(recipe['substances'])
+    if len(recipe['solutions']) > 0:
+        solutions = json.loads(recipe['solutions'])
     class AddAnalysisSchema(CSRFSchema):
         done_date = colander.SchemaNode(colander.Date(),
             title="Дата виконання", validator=colander.Range(
@@ -1057,113 +1062,125 @@ def add_done_analysis(request):
             appstruct = form.validate(controls)
             done_date = appstruct['done_date']
             quantity = appstruct['quantity']
-            subsbstances_quantity = {
-                key: -value * quantity for key, value in substances.items()
-            }
-            substances_names = list(substances.keys())
-            # check remainders
-            query_stock = request.dbsession.query(models.Stock).\
-                        filter(models.Stock.substance_name.in_(
-                        substances_names)).all()
-            if len(query_stock) == 0:
-                message = f'На складі відсутні речовини!'
-                return {'form': form, 'message': message, 'recipe': recipe}
+            # handling substances
+            if isinstance(substances, dict):
+                subsbstances_quantity = {
+                    key: -value * quantity for key, value in substances.items()
+                }
+                substances_names = list(substances.keys())
+                # check remainders
+                query_stock = request.dbsession.query(models.Stock).\
+                            filter(models.Stock.substance_name.in_(
+                            substances_names)).all()
+                if len(query_stock) == 0:
+                    message = f'На складі відсутні речовини!'
+                    return {'form': form, 'message': message, 'recipe': recipe}
+                else:
+                    query_stock_dicts = [qs.__dict__ for qs in query_stock]
+                    df = pd.DataFrame.from_records(query_stock_dicts)
+                got_substances = df['substance_name'].unique().tolist()
+                missing = set(substances_names) - set(got_substances)
+                if len(missing) > 0:
+                    missing_string = ' '.join(missing)
+                    message = f'Відсутні залишки: {missing_string}'
+                    return {'form': form, 'message': message, 'recipe': recipe}
+                # list for collect instances of class Stock: to_insert_into_stock
+                insert_into_stock = []
+                substances_cost = {}
+                for key, value in subsbstances_quantity.items():
+                    df_key = df[df.substance_name==key]
+                    subs_measurement = df_key['measurement'].values[0]
+                    sum_remainder = df_key['amount'].sum()
+                    sum_remainder = sum_remainder.__float__()
+                    new_remainder = sum_remainder + value
+                    avg_price = df_key['total_cost'].sum() / df_key['amount'].sum()
+                    avg_price = avg_price.__float__()
+                    subs_total_cost = avg_price * value
+                    subs_notes = f'Аналіз {recipe_name} в кількості: {quantity}'
+                    new_stock = models.Stock(
+                        substance_name=key,
+                        measurement=subs_measurement,
+                        amount=value,
+                        remainder=new_remainder,
+                        price=avg_price,
+                        total_cost=subs_total_cost,
+                        notes=subs_notes,
+                        recipe=recipe_name
+                    )
+                    insert_into_stock.append(new_stock)
+                    substances_cost[key] = subs_total_cost
+                total_substances_cost = [v for v in substances_cost.values()]
+                total_substances_cost = sum(total_substances_cost) * -1
+                substances_cost = json.dumps(substances_cost)
+                for stock in insert_into_stock:
+                    request.dbsession.add(stock)
             else:
-                query_stock_dicts = [qs.__dict__ for qs in query_stock]
-                df = pd.DataFrame.from_records(query_stock_dicts)
-            got_substances = df['substance_name'].unique().tolist()
-            missing = set(substances_names) - set(got_substances)
-            if len(missing) > 0:
-                missing_string = ' '.join(missing)
-                message = f'Відсутні залишки: {missing_string}'
-                return {'form': form, 'message': message, 'recipe': recipe}
-            # list for collect instances of class Stock: to_insert_into_stock
-            insert_into_stock = []
-            substances_cost = {}
-            for key, value in subsbstances_quantity.items():
-                df_key = df[df.substance_name==key]
-                subs_measurement = df_key['measurement'].values[0]
-                sum_remainder = df_key['amount'].sum()
-                sum_remainder = sum_remainder.__float__()
-                new_remainder = sum_remainder + value
-                avg_price = df_key['total_cost'].sum() / df_key['amount'].sum()
-                avg_price = avg_price.__float__()
-                subs_total_cost = avg_price * value
-                subs_notes = f'Аналіз {recipe_name} в кількості: {quantity}'
-                new_stock = models.Stock(
-                    substance_name=key,
-                    measurement=subs_measurement,
-                    amount=value,
-                    remainder=new_remainder,
-                    price=avg_price,
-                    total_cost=subs_total_cost,
-                    notes=subs_notes,
-                    recipe=recipe_name
-                )
-                insert_into_stock.append(new_stock)
-                substances_cost[key] = subs_total_cost
+                total_substances_cost = 0.0
+                substances_cost = ''
             # handling solutions
-            solutions_quantity = {
-                key: -value * quantity for key, value in solutions.items()
-            }
-            solutions_names = [*solutions.keys()]
-            query_solutions = request.dbsession.query(models.Solution).\
-                            filter(models.Solution.normative.in_(
-                            solutions_names)).all()
-            if len(query_solutions) == 0:
-                message = f'Немає готових розчинів для цього аналізу.'
-                return {'form': form, 'message': message, 'recipe': recipe}
+            if isinstance(solutions, dict):
+                solutions_quantity = {
+                    key: -value * quantity for key, value in solutions.items()
+                }
+                solutions_names = [*solutions.keys()]
+                query_solutions = request.dbsession.query(models.Solution).\
+                                filter(models.Solution.normative.in_(
+                                solutions_names)).all()
+                if len(query_solutions) == 0:
+                    message = f'Немає готових розчинів для цього аналізу.'
+                    return {'form': form, 'message': message, 'recipe': recipe}
+                else:
+                    query_solutions_dicts = [qs.__dict__ for qs in query_solutions]
+                    df2 = pd.DataFrame.from_records(query_solutions_dicts)
+                got_solutions = df2['normative'].unique().tolist()
+                missing = set(solutions_names) - set(got_solutions)
+                if len(missing) > 0:
+                    missing_string = ' '.join(missing)
+                    message = f'Відсутні залишки: {missing_string}'
+                    return {'form': form, 'message': message, 'recipe': recipe}
+                insert_into_solutions = []
+                solutions_cost = {}
+                for key, value in solutions_quantity.items():
+                    df2_key = df2[df2.normative==key]
+                    sol_measurement = df2_key['measurement'].values[0]
+                    sol_remainder = df2_key['amount'].sum()
+                    sol_remainder = sol_remainder.__float__()
+                    new_remainder = sol_remainder + value
+                    avg_price = df2_key['total_cost'].sum() / df2_key['amount'].sum()
+                    avg_price = avg_price.__float__()
+                    sol_total_cost = avg_price * value
+                    sol_notes = f'Аналіз {recipe_name} в кількості: {quantity}'
+                    new_solution = models.Solution(
+                        normative=key,
+                        measurement=sol_measurement,
+                        amount=value,
+                        remainder=new_remainder,
+                        price=avg_price,
+                        total_cost=sol_total_cost,
+                        created_at=datetime.date.today(),
+                        notes=sol_notes,
+                        recipe=recipe_name
+                    )
+                    insert_into_solutions.append(new_solution)
+                    solutions_cost[key] = sol_total_cost
+                total_solutions_cost = [v for v in solutions_cost.values()]
+                total_solutions_cost = sum(total_solutions_cost) * -1
+                solutions_cost = json.dumps(solutions_cost)
+                for sol in insert_into_solutions:
+                    request.dbsession.add(sol)
             else:
-                query_solutions_dicts = [qs.__dict__ for qs in query_solutions]
-                df2 = pd.DataFrame.from_records(query_solutions_dicts)
-            got_solutions = df2['normative'].unique().tolist()
-            missing = set(solutions_names) - set(got_solutions)
-            if len(missing) > 0:
-                missing_string = ' '.join(missing)
-                message = f'Відсутні залишки: {missing_string}'
-                return {'form': form, 'message': message, 'recipe': recipe}
-            insert_into_solutions = []
-            solutions_cost = {}
-            for key, value in solutions_quantity.items():
-                df2_key = df2[df2.normative==key]
-                sol_measurement = df2_key['measurement'].values[0]
-                sol_remainder = df2_key['amount'].sum()
-                sol_remainder = sol_remainder.__float__()
-                new_remainder = sol_remainder + value
-                avg_price = df2_key['total_cost'].sum() / df2_key['amount'].sum()
-                avg_price = avg_price.__float__()
-                sol_total_cost = avg_price * value
-                sol_notes = f'Аналіз {recipe_name} в кількості: {quantity}'
-                new_solution = models.Solution(
-                    normative=key,
-                    measurement=sol_measurement,
-                    amount=value,
-                    remainder=new_remainder,
-                    price=avg_price,
-                    total_cost=sol_total_cost,
-                    created_at=datetime.date.today(),
-                    notes=sol_notes,
-                    recipe=recipe_name
-                )
-                insert_into_solutions.append(new_solution)
-                solutions_cost[key] = sol_total_cost
-            total_substances_cost = [v for v in substances_cost.values()]
-            total_substances_cost = sum(total_substances_cost) * -1
-            total_solutions_cost = [v for v in solutions_cost.values()]
-            total_solutions_cost = sum(total_solutions_cost) * -1
+                total_solutions_cost = 0.0
+                solutions_cost = ''
+            # create row for analysis
             this_analysis = models.Analysis(
                 recipe_name=recipe_name,
                 quantity=quantity,
                 done_date=done_date,
                 total_cost=total_substances_cost + total_solutions_cost,
-                substances_cost=json.dumps(substances_cost),
-                solutions_cost=json.dumps(solutions_cost)
+                substances_cost=substances_cost,
+                solutions_cost=solutions_cost
             )
             request.dbsession.add(this_analysis)
-            for stock in insert_into_stock:
-                request.dbsession.add(stock)
-            for sol in insert_into_solutions:
-                request.dbsession.add(sol)
             next_url = request.route_url('analysis_done')
             return HTTPFound(location=next_url)
         except ValidationFailure as e:

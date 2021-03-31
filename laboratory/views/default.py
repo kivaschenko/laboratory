@@ -1257,7 +1257,8 @@ def statistic_form(request):
                 df_subs['color'] = viridis(num_colors)
                 source = ColumnDataSource(data=df_subs)
                 pieplot = figure(
-                    plot_height=400, sizing_mode="scale_both",
+                    plot_height=600, 
+                    sizing_mode="scale_both",
                     title='Частки витрат речовин, грн.', toolbar_location=None,
                     tools='hover', tooltips="@subs_name: @costs" + " грн.",
                     x_range=(-0.5, 1.0)
@@ -1269,6 +1270,7 @@ def statistic_form(request):
                 pieplot.axis.axis_label=None
                 pieplot.axis.visible=False
                 pieplot.grid.grid_line_color=None
+                pieplot.legend.label_text_font_size = '7pt'
                 pie_script, pie_div = components(pieplot)
                 # analysis horizontal bar and table
                 analysis_sql = '''SELECT analysis.recipe_name AS analysis,
@@ -1286,7 +1288,7 @@ def statistic_form(request):
                 plot_an = figure(
                     y_range=df_an['analysis'].tolist(),
                     x_range=(0, df_an['numbers'].max()),
-                    plot_height=250, sizing_mode="scale_both",
+                    plot_height=450, sizing_mode="scale_both",
                     title='Кількість виконаних аналізів', toolbar_location=None,
                     tools='hover', tooltips="@analysis: @numbers раз, @cost грн."
                     )

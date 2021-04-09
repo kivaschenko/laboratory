@@ -292,6 +292,15 @@ def input_substance(request):
                     "min": "0",
                     "max": "9999.99"
                 }))
+        creation_date = colander.SchemaNode(colander.Date(),
+           validator=colander.Range(
+           min=datetime.date(datetime.date.today().year - 1, 1, 1),
+           max=datetime.date.today(),
+           min_err=("${val} раніше чим дозволено мінімальну: ${min}"),
+           max_err=("${val} пізніше ніж дозволено максимальну дату: ${max}")),
+           title="Дата приходу",
+           default=datetime.date.today(),
+           )
         notes = colander.SchemaNode(colander.String(),
             title="Примітка",
             default=' ',
@@ -328,6 +337,7 @@ def input_substance(request):
                 remainder=last_remainder + amount,
                 price=price,
                 total_cost=total_cost,
+                creation_date=appstruct['creation_date'],
                 notes=notes
             )
             request.dbsession.add(new_stock)

@@ -3,9 +3,13 @@
 {% block content %}
 <div class="content">
   <h1><span class="font-semi-bold">Лабораторія</span> <span class="smaller">комбікормовий завод</span></h1>
-  <p class="lead">Вітаємо, це <span class="font-normal">{{project}}</span>, створена за допомогою <a href="https://trypyramid.com/">&nbsp;Pyramid application&nbsp;</a>by<br><span class="font-normal">Cookiecutter</span>.</p>
-  <p>{{ one['name'] }} - основний компонет для розчинів. В каталозі реактивів під номером {{ one['id'] }}. Одиниця виміру: {{ one['measurement'] }}</p>
-  <h2><span class="font-semi-bold">Часті питання та допомога</span></h2>
+
+  <div class="col-md-5 filter">
+    <h2><span class="lead font-semi-bold">Фільтр по журналам</span></h2>
+    {{form|safe}}
+  </div>
+  <div class="col-md-5">
+  <h2><span class="lead font-semi-bold">Часті питання та допомога</span></h2>
   <ol>
     <li>Використовуйте унікальні назви не тільки в одному каталозі, а й між ними.
       Тобто назва речовини не може бути однакова з розчином, сумішшю або назвою аналізу.
@@ -30,5 +34,6 @@
     то вибираємо дати 03/15/2021 - 03/17/2021</li>
     <li>Оскільки программа працює через інтернет - бажано періодично змінювати пароль, щонайменше раз на три місяці.</li>
   </ol>
+</div>
 </div>
 {% endblock content %}

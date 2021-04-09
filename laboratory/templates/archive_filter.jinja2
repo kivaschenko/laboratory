@@ -1,0 +1,50 @@
+{% extends "layout.jinja2" %}
+
+{% block content %}
+<div class="content">
+<h2><span class="font-semi-bold">Фільтр по журналу</span><br>
+<span class="lead font-normal">{{ name_item }}: {{ start_date }} - {{ end_date }}</span></h2>
+{% if item_list %}
+<p>Нажміть на кнопку щоб роздрукувати цю сторінку або зберегти в .pdf файл
+	<button onclick=window.print() class="btn btn-primary">Друк</button></p>
+<table id="items" class="table table-bordered" style="width:100%">
+	<thead>
+		<tr>
+			<th>дата</th>
+			<th>кількість</th>
+			<th>ціна</th>
+			<th>сума</th>
+			<th>примітки</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for item in item_list %}
+		<tr>
+			<td>{{ item[0].strftime("%Y-%m-%d") }}</td>
+			<td>{{ '%0.3f'| format(item[1]|float) }}</td>
+			<td>{{ '%0.3f'| format(item[2]|float) }}</td>
+			<td>{{ '%0.3f'| format(item[3]|float) }}</td>
+			<td>{{ item[4] }}</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+{% endif %}
+
+<script>
+  $(document).ready(function() {
+    $('#items').DataTable( {
+      language: {
+          search: "Пошук по таблиці",
+          paginate: {
+            first: "Перша",
+            previous: "Попередня",
+            next: "Наступна",
+            last: "Остання"
+          },
+      }
+    } );
+  } );
+</script>
+
+{% endblock content %}

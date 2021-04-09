@@ -1,7 +1,8 @@
 def includeme(config):
     config.add_static_view('static', 'static', cache_max_age=3600)
     config.add_route('home', '/', factory='laboratory.security.LabFactory')
-
+    config.add_route('archive_filter', 'archive-filter/{type_item}/{name_item}/{direction}/{start_date}/{end_date}',
+                     factory='laboratory.security.LabFactory')
     # substances
     config.add_route('substances', '/substances', factory='laboratory.security.LabFactory')
     config.add_route('substances_edit', '/substances/edit', factory='laboratory.security.LabFactory')

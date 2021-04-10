@@ -18,6 +18,7 @@ def includeme(config):
     config.add_route('solutions', '/solutions', factory='laboratory.security.LabFactory')
     config.add_route('create_solution', '/create_solution/{normative}', factory='laboratory.security.LabFactory')
     config.add_route('aggregate_solution', '/aggregate-solution', factory='laboratory.security.LabFactory')
+    config.add_route('correct_solution', 'correct_solution/{normative}', factory='laboratory.security.LabFactory')
 
     # recipe and analysis
     config.add_route('new_recipe', '/new-recipe', factory='laboratory.security.LabFactory')

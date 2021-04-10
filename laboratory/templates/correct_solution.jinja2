@@ -1,0 +1,12 @@
+{% extends 'layout.jinja2' %}
+
+{% block content %}
+<div class="content">
+    <h2><span class="lead font-semi-bold">Списати залишок</span><br>
+    	<span class="smaller font-bold">{{ current_solution['normative'] }}</span></h2>
+    <p>Введіть кількість розчину зі знаком "мінус"" у відповідні поля форми та натисніть кнопку для запису в базу даних.</p>
+    <h3>Поточний залишок: {{current_solution['remainder']}} {{current_solution['measurement']}}</h3>
+    {{ form.render()|safe}}
+</div>
+
+{% endblock %}

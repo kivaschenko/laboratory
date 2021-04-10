@@ -19,7 +19,7 @@ from pyramid.httpexceptions import (
     HTTPFound,
     HTTPSeeOther
 )
-from sqlalchemy import text, desc
+from sqlalchemy import text, desc, func
 from sqlalchemy.exc import DBAPIError
 
 from .. import models
@@ -279,6 +279,7 @@ def input_substance(request):
     class BuySchema(CSRFSchema):
         substance_name = colander.SchemaNode(colander.String(),
             title='Реактив (речовина, індикатор)',
+            description='Вибреріть реактив (речовину, індикатор)',
             widget=deform.widget.SelectWidget(values=choices))
         amount = colander.SchemaNode(colander.Decimal(), default=0.001,
             validator=colander.Range(
@@ -286,7 +287,7 @@ def input_substance(request):
                 max=decimal.Decimal("1000000.000")
             ),
             title="Кількість",
-            description='Вибреріть реактив (речовину, індикатор)',
+            description="Число від -1000000.000 до 1000000.000 в залежності від напрямку - приход або розход",
             widget=deform.widget.TextInputWidget(
                 attributes={
                     "type": "numeric",
@@ -343,7 +344,7 @@ def input_substance(request):
             last_remainder = 0
             subs_ = request.dbsession.query(models.Stock.remainder).\
                        filter(models.Stock.substance_name==substance_name).\
-                       order_by(desc(models.Stock.creation_date)).first()
+                       order_by(desc(models.Stock.id)).first()
             if subs_ is not None:
                 last_remainder += subs_[0].__float__()
             new_stock = models.Stock(
@@ -512,15 +513,17 @@ def make_new_solution(request):
             title="Одиниця виміру", default=current_measurement)
         created_at = colander.SchemaNode(colander.Date(),
            validator=colander.Range(
-           min=datetime.date(datetime.date.today().year, 1, 1),
-           min_err=("${val} раніше чим дозволено мінімальну: ${min}"),),
+           min=datetime.date(datetime.date.today().year - 1, 1, 1),
+           max=datetime.date.today(),
+           min_err=("${val} раніше чим дозволено мінімальну: ${min}"),
+           max_err=("${val} пізніше ніж дозволено максимальну дату: ${max}")),
            title="Дата виготовлення",
            default=datetime.date.today(),
            )
         due_date = colander.SchemaNode(colander.Date(),
            validator=colander.Range(
-           min=datetime.date(datetime.date.today().year, 1, 1),
-           min_err=("${val} раніше чим дозволено минимальну: ${min}"),),
+           min=datetime.date(datetime.date.today().year - 1, 1, 1),
+           min_err=("${val} раніше чим дозволено мінімальну: ${min}"),),
            title="Дата придатності",
            default=datetime.date.today() + datetime.timedelta(days=15)
            )
@@ -664,7 +667,7 @@ def make_new_solution(request):
             last_remainder = 0
             get_remainder = request.dbsession.query(models.Solution.remainder).\
                           filter(models.Solution.normative==normative_name).\
-                          order_by(desc(models.Solution.created_at)).first()
+                          order_by(desc(models.Solution.id)).first()
             if get_remainder is not None:
                 last_remainder += get_remainder[0].__float__()
             # add to solution model
@@ -685,6 +688,82 @@ def make_new_solution(request):
         except ValidationFailure as e:
             return {'form': e, 'normative': normative_name}
     return {'form': form, 'normative': normative_name}
+
+
+@view_config(route_name='correct_solution', permission='edit', 
+             renderer='../templates/correct_solution.jinja2')
+def correct_solution(request):
+    csrf_token = request.session.get_csrf_token()
+    def validate_csrf(node, value):
+        if value != csrf_token:
+            raise ValueError("Bad CSRF token")
+    class CSRFSchema(colander.Schema):
+        csrf = colander.SchemaNode(colander.String(), default=csrf_token,
+             validator=validate_csrf, widget=deform.widget.HiddenWidget())
+    normative_name = request.matchdict['normative']   
+    current_solution = request.dbsession.query(models.Solution).\
+        filter(models.Solution.normative==normative_name).order_by(
+        desc(models.Solution.id)).first()
+    current_solution = current_solution.__dict__
+    curr_notes = f'Списано залишок'
+    current_measurement = current_solution['measurement']
+    class SolutionSchema(CSRFSchema):
+        amount = colander.SchemaNode(colander.Decimal(), default=-0.001,
+            validator=colander.Range(
+                min=-decimal.Decimal("1000000.000"),
+                max=-decimal.Decimal("0.001")
+            ),
+            title="Кількість, {}".format(current_measurement),
+            description='Число від -1000000.000 до -0.001',
+            widget=deform.widget.TextInputWidget(
+                attributes={
+                    "type": "numeric",
+                    "inputmode": "decimal",
+                    "step": "-0.001",
+                    "min": "-1000000.000",
+                    "max": "-0.001"
+                }
+            )
+        )
+        created_at = colander.SchemaNode(colander.Date(),
+           validator=colander.Range(
+           min=datetime.date(datetime.date.today().year - 1, 1, 1),
+           max=datetime.date.today(),
+           min_err=("${val} раніше чим дозволено мінімальну: ${min}"),
+           max_err=("${val} пізніше ніж дозволено максимальну дату: ${max}")),
+           title="Дата списання",
+           default=datetime.date.today(),
+           )
+        notes = colander.SchemaNode(colander.String(),
+            title="Примітка",
+            missing='', default=curr_notes,
+            validator=colander.Length(max=600),
+            widget=deform.widget.TextAreaWidget(rows=5, cols=60),
+            description="Необов'язково, до 600 символів з пробілами",)
+    schema = SolutionSchema().bind(request=request)
+    form = deform.Form(schema, buttons=("submit",))   
+    if 'submit' in request.POST:
+        controls = request.POST.items()
+        try:
+            appstruct = form.validate(controls)
+            new_amount = appstruct['amount'].__float__()
+            last_remainder = current_solution['remainder'].__float__()
+            last_price = current_solution['price'].__float__()
+            new_solution = models.Solution(
+                normative=normative_name,
+                measurement=current_measurement,
+                amount=new_amount,   
+                remainder=last_remainder + new_amount,
+                price=last_price,
+                total_cost=abs(last_price * new_amount),
+                created_at=appstruct['created_at'],
+                notes=appstruct['notes']
+            )
+            request.dbsession.add(new_solution)
+            return HTTPSeeOther(request.route_url('solutions'))
+        except ValidationFailure as e:
+            return {'form': e, 'current_solution': current_solution}
+    return {'form': form, 'current_solution': current_solution}
 
 
 #=======================

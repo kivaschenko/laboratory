@@ -26,7 +26,7 @@
     {% for item in history %}
     <tr>
 			<td>{{ item['id'] }}</td>
-      <td>{{ item['creation_date'] }}</td>
+      <td>{{ item['creation_date'].strftime('%Y-%m-%d %H:%M') }}</td>
       <td>{{ item['substance_name'] }}</td>
 			<td>{{ item['measurement'] }}</td>
 			<td>{{'%0.3f'| format(item['amount']|float) }} </td>

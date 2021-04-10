@@ -374,8 +374,8 @@ def stock_all_parties(request):
     if len(query) == 0:
         message = 'Немає приходів і розходів. Історія складу пуста.'
     history = [q.__dict__ for q in query]
-    for item in history:
-        item['creation_date'] = item['creation_date'].strftime('%Y-%m-%d %H:%M')
+    # for item in history:
+    #     item['creation_date'] = item['creation_date'].strftime('%Y-%m-%d')
     subs = [item['substance_name'] for item in history]
     sorted(subs)
     subs = list(set(subs))

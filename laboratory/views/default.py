@@ -24,6 +24,22 @@ from sqlalchemy.exc import DBAPIError
 
 from .. import models
 
+#==========================
+# DB MESSAGE
+db_err_msg = """\
+Pyramid is having a problem using your SQL database.  The problem
+might be caused by one of the following things:
+
+1.  You may need to initialize your database tables with `alembic`.
+    Check your README.txt for descriptions and try to run it.
+
+2.  Your database server may not be running.  Check that the
+    database server referred to by the "sqlalchemy.url" setting in
+    your "development.ini" file is running.
+
+After you fix the problem, please restart the Pyramid application to
+try it again.
+"""
 
 #===================
 # HOME
@@ -521,7 +537,7 @@ def make_new_solution(request):
         controls = request.POST.items()
         try:
             appstruct = form.validate(controls)
-            created_at = appstruct['created_at']
+            created_at = appstruct['created_at'] #<- date for outcome substances
             due_date = appstruct['due_date']
             notes = appstruct['notes']
             amount = appstruct['amount'].__float__()
@@ -575,6 +591,7 @@ def make_new_solution(request):
                     remainder=new_remainder,
                     price=subs_price,
                     total_cost=subs_total_cost,
+                    creation_date=created_at,
                     notes=subs_notes,
                     normative=normative_name
                 )
@@ -618,6 +635,11 @@ def make_new_solution(request):
                     sol_measurement = df2_key['measurement'].values[0]
                     sol_remainder = df2_key['amount'].sum()
                     sol_remainder = sol_remainder.__float__()
+                    if sol_remainder == 0.0:
+                        message = f'Залишки {key} дорівнюють 0! \
+    Неможливо порахувати середню ціну, тому що ділення на 0! Відкорегуйте залишок {key}.'
+                        return {'form': form, 'message': message,
+                                'normative': normative_name}                        
                     new_remainder = sol_remainder + value
                     avg_price = df2_key['total_cost'].sum() / df2_key['amount'].sum()
                     avg_price = avg_price.__float__()
@@ -630,7 +652,7 @@ def make_new_solution(request):
                         remainder=new_remainder,
                         price=avg_price,
                         total_cost=sol_total_cost,
-                        created_at=datetime.date.today(),
+                        created_at=created_at,
                         notes=sol_notes,
                         recipe=normative_name
                     )
@@ -1147,7 +1169,6 @@ def new_recipe_next(request):
 def add_done_analysis(request):
     message = ''
     csrf_token = request.session.get_csrf_token()
-
     def validate_csrf(node, value):
         if value != csrf_token:
             raise ValueError("Bad CSRF token")
@@ -1203,7 +1224,7 @@ def add_done_analysis(request):
                     missing_string = ' '.join(missing)
                     message = f'Відсутні залишки: {missing_string}'
                     return {'form': form, 'message': message, 'recipe': recipe}
-                # list for collect instances of class Stock: to_insert_into_stock
+                # list to collect instances of class Stock: to_insert_into_stock
                 insert_into_stock = []
                 substances_cost = {}
                 for key, value in subsbstances_quantity.items():
@@ -1211,6 +1232,12 @@ def add_done_analysis(request):
                     subs_measurement = df_key['measurement'].values[0]
                     sum_remainder = df_key['amount'].sum()
                     sum_remainder = sum_remainder.__float__()
+                    if sum_remainder == 0.0:
+                        message = "Залишок речовини '{key}' дорівнює 0! Неможливо \
+    порахувати середню ціну, тому ділення на 0! Відкорегуйте залишок {key}".\
+                        format(key=key)
+                        return {'form': form, 'message': message, 
+                                'recipe': recipe}
                     new_remainder = sum_remainder + value
                     avg_price = df_key['total_cost'].sum() / df_key['amount'].sum()
                     avg_price = avg_price.__float__()
@@ -1223,6 +1250,7 @@ def add_done_analysis(request):
                         remainder=new_remainder,
                         price=avg_price,
                         total_cost=subs_total_cost,
+                        creation_date=done_date,
                         notes=subs_notes,
                         recipe=recipe_name
                     )
@@ -1264,6 +1292,12 @@ def add_done_analysis(request):
                     sol_measurement = df2_key['measurement'].values[0]
                     sol_remainder = df2_key['amount'].sum()
                     sol_remainder = sol_remainder.__float__()
+                    if sol_remainder == 0.0:
+                        message = "Залишок розчину '{key}' дорівнює 0! Неможливо \
+    порахувати середню ціну, тому ділення на 0! Відкорегуйте залишок {key}".\
+                        format(key=key)
+                        return {'form': form, 'message': message, 
+                                'recipe': recipe}
                     new_remainder = sol_remainder + value
                     avg_price = df2_key['total_cost'].sum() / df2_key['amount'].sum()
                     avg_price = avg_price.__float__()
@@ -1276,7 +1310,7 @@ def add_done_analysis(request):
                         remainder=new_remainder,
                         price=avg_price,
                         total_cost=sol_total_cost,
-                        created_at=datetime.date.today(),
+                        created_at=done_date,
                         notes=sol_notes,
                         recipe=recipe_name
                     )
@@ -1295,7 +1329,7 @@ def add_done_analysis(request):
                 recipe_name=recipe_name,
                 quantity=quantity,
                 done_date=done_date,
-                total_cost=total_substances_cost + total_solutions_cost,
+                total_cost=abs(total_substances_cost + total_solutions_cost),
                 substances_cost=substances_cost,
                 solutions_cost=solutions_cost
             )

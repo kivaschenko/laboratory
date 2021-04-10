@@ -28,6 +28,6 @@ class Stock(Base):
         return f'<Stock(id={self.id} {self.substance_name} \
 amount: {self.amount} price: {self.price} {self.creation_date})>'
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.creation_date = datetime.today()
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     self.creation_date = datetime.today()

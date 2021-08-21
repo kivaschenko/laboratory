@@ -661,6 +661,9 @@ def make_new_solution(request):
                     )
                     insert_into_solutions.append(new_solution)
                     solutions_cost[key] = sol_total_cost
+                # new, to correct the reduction of residual solutions
+                for record in insert_into_solutions:
+                    request.dbsession.add(record)
                 total_solutions_cost = [v for v in solutions_cost.values()]
                 total_solutions_cost = sum(total_solutions_cost) * -1
             solution_price = round((total_substances_cost + total_solutions_cost) / amount, 2)

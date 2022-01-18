@@ -1433,7 +1433,7 @@ def analysis_history(request):
         analysises = [q.__dict__ for q in query]
     except DBAPIError:
         message = db_err_msg
-    return {'analysises': analysises, 'massage': message}
+    return {'analysises': analysises, 'message': message}
 
 
 #===========================

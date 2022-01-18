@@ -7,4 +7,4 @@ WORKDIR /laboratory
 COPY . .
 RUN pip install -e .
 
-CMD ["pserve", "production.ini"]
+CMD ["pserve", "production.ini", "--reload"]

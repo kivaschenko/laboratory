@@ -1270,7 +1270,7 @@ def add_done_analysis(request):
     class AddAnalysisSchema(CSRFSchema):
         done_date = colander.SchemaNode(colander.Date(),
             title="Дата виконання", validator=colander.Range(
-            min=datetime.date(datetime.date.today().year, 1, 1),
+                min=datetime.date(datetime.date.today().year - 1, 1, 1),
             min_err=("${val} раніше чим дозволено мінімальну: ${min}"),),
             default=datetime.date.today())
         quantity = colander.SchemaNode(colander.Integer(),

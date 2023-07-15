@@ -110,7 +110,6 @@ def my_view(request):
         controls = request.POST.items()
         try:
             appstruct = form.validate(controls)
-            print("appstruct filter form: ", appstruct)
             next_url = request.route_url("archive_filter", **appstruct)
             return HTTPSeeOther(next_url)
         except ValidationFailure as e:
@@ -193,7 +192,6 @@ def filter_archive(request):
                 .filter(models.Solution.amount < 0)
                 .all()
             )
-    print("filter query: ", query)
     item_list = []
     if len(query) > 0:
         item_list = [q for q in query]
@@ -507,8 +505,10 @@ def get_aggregate_stock(request):
     return {"stock_list": stock_, "message": message}
 
 
-# =======================
+# =========
 # SOLUTIONS
+
+
 @view_config(
     route_name="aggregate_solution",
     permission="create",
@@ -1749,24 +1749,57 @@ def analysis_history(request):
 @view_config(route_name="delete_analysis", permission="edit")
 def delete_analysis(request):
     analysis_id = request.matchdict["analysis_id"]
-    obj = request.dbsession.get(models.Analysis, analysis_id)
-    analysis = obj.__dict__
+    analysis_obj = request.dbsession.get(models.Analysis, analysis_id)
+    analysis = analysis_obj.__dict__
     quantity = analysis.get("quantity")
     done_date = analysis.get("done_date")
-    obj = (
+    adopt_date = datetime.datetime(done_date.year, done_date.month, done_date.day)
+    recipe_obj = (
         request.dbsession.query(models.Recipe)
         .filter_by(name=analysis["recipe_name"])
         .one()
     )
-    recipe = obj.__dict__
+    recipe = recipe_obj.__dict__
     print("recipe:", recipe)
-    if substances := recipe.get("substances"):
-        substances = json.loads(substances)
-        print("substances:", substances)
-    if solutions := recipe.get("solutions"):
-        solutions = json.loads(solutions)
-        print("solutions:", solutions)
-    breakpoint()
+    try:
+        if substances := recipe.get("substances"):
+            substances = json.loads(substances)
+            print("substances:", substances)
+            # delete records from Stock according substances list and analysis quantity
+            for name_ in substances:
+                amount = -quantity * substances[name_]
+                record = (
+                    request.dbsession.query(models.Stock)
+                    .filter_by(substance_name=name_)
+                    .filter_by(amount=amount)
+                    .filter_by(creation_date=adopt_date)
+                    .one()
+                )
+                print('record:', record)
+                request.dbsession.delete(record)
+        else:
+            pass
+        if solutions := recipe.get("solutions"):
+            solutions = json.loads(solutions)
+            print("solutions:", solutions)
+            # delete records from Solution according solutions list and analysis quantity
+            for name_ in solutions:
+                amount = -quantity * solutions[name_]
+                record = (
+                    request.dbsession.query(models.Solution)
+                    .filter_by(normative=name_)
+                    .filter_by(amount=amount)
+                    .filter_by(created_at=done_date)
+                    .one()
+                )
+                print('record:', record)
+                request.dbsession.delete(record)
+        else:
+            pass
+        # delete current analysis
+        request.dbsession.delete(analysis_obj)
+    except Exception as exc:
+        print('exc:', exc)
     next_url = request.route_url("analysis_done")
     return HTTPFound(location=next_url)
 

@@ -16,6 +16,7 @@
     <th>кількість</th>
     <th>Дата</th>
     <th>Загальна вартість, грн.</th>
+    <th>Видалити</th>
     </tr>
   </thead>
   <tbody>
@@ -26,6 +27,7 @@
     <td>{{ item['quantity'] }}</td>
     <td>{{ item['done_date'] }}</td>
     <td>{{ '%0.2f'|format(item['total_cost']|float) }}</td>
+    <td><a href="/delete-analysis/{{item['id']}}" class="btn btn-danger">Видалити</a></td>
     </tr>
     {% endfor %}
   </tbody>

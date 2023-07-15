@@ -29,6 +29,7 @@ def includeme(config):
     config.add_route('recipe_details', '/resipe-details/{id_recipe}', factory='laboratory.security.LabFactory')
     config.add_route('analysis_done', '/analysis-done', factory='laboratory.security.LabFactory')
     config.add_route('add_analysis', '/add-analysis/{id_recipe}', factory='laboratory.security.LabFactory')
+    config.add_route('delete_analysis', '/delete-analysis/{analysis_id}', factory='laboratory.security.LabFactory')
 
     # stock
     config.add_route('stock', '/stock', factory='laboratory.security.LabFactory')

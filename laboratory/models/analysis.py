@@ -18,4 +18,4 @@ class Analysis(Base):
     solutions_cost = Column(JSON)
 
     def __repr__(self):
-        return f'<Analysis({self.id} - {self.recipe_name} - {self.done_date})>'
+        return f'<Analysis({self.id} - {self.recipe_name} - {self.quantity} - {self.done_date})>'

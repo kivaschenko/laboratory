@@ -398,16 +398,12 @@ def get_aggregate_stock(request):
         FROM stock
         GROUP BY stock.substance_name,  stock.measurement"""
     try:
-        query = request.dbsession.execute(textual_sql).fetchall()
+        query = request.dbsession.execute(text(textual_sql)).fetchall()
         stock_list = [q for q in query]
         stock_ = []
         for q in stock_list:
             temp_dict = {}
-            temp_dict['substance_name'] = q['substance_name']
-            temp_dict['measurement'] = q['measurement']
-            temp_dict['total_amount'] = q['total_amount'].__float__()
-            temp_dict['avg_price'] = q['avg_price'].__float__()
-            temp_dict['sum_cost'] = q['sum_cost']
+            temp_dict['substance_name'], temp_dict['measurement'], temp_dict['total_amount'], temp_dict['avg_price'], temp_dict['sum_cost'] = q
             stock_.append(temp_dict)
     except DBAPIError:
         message = db_err_msg
@@ -421,25 +417,23 @@ def get_aggregate_stock(request):
 def agregate_solution_remainder(request):
     message = ''
     solutions = []
-    textual_sql = """
-        SELECT solutions.normative AS normative,
-        solutions.measurement AS measurement,
-        SUM (solutions.amount) AS total_amount,
-        AVG (solutions.price) AS avg_price,
-        SUM (solutions.amount) * AVG (solutions.price) AS sum_cost
-        FROM solutions
-        GROUP BY solutions.normative, solutions.measurement"""
+    textual_sql = """SELECT solutions.normative AS normative, solutions.measurement AS measurement,
+                SUM (solutions.amount) AS total_amount,
+                AVG (solutions.price) AS avg_price,
+                SUM (solutions.amount) * AVG (solutions.price) AS sum_cost
+                FROM solutions
+                GROUP BY solutions.normative, solutions.measurement"""
     try:
-        query = request.dbsession.execute(textual_sql).fetchall()
+        query = request.dbsession.execute(text(textual_sql)).fetchall()
         solutions = [q for q in query]
         solutions_cleaned = []
         for sol in solutions:
             temp_dict = {}
-            temp_dict['normative'] = sol['normative']
-            temp_dict['measurement'] = sol['measurement']
-            temp_dict['total_amount'] = sol['total_amount'].__float__()
-            temp_dict['avg_price'] = sol['avg_price'].__float__()
-            temp_dict['sum_cost'] = sol['sum_cost']
+            temp_dict['normative'] = sol[0]
+            temp_dict['measurement'] = sol[1]
+            temp_dict['total_amount'] = sol[2].__float__()
+            temp_dict['avg_price'] = sol[3].__float__()
+            temp_dict['sum_cost'] = sol[4]
             solutions_cleaned.append(temp_dict)
     except DBAPIError:
         message = db_err_msg
@@ -1434,6 +1428,27 @@ def analysis_history(request):
     except DBAPIError:
         message = db_err_msg
     return {'analysises': analysises, 'message': message}
+
+
+@view_config(route_name='delete_analysis', permission='edit')
+def delete_analysis(request):
+    analysis_id = request.matchdict['analysis_id']
+    obj = request.dbsession.get(models.Analysis, analysis_id)
+    analysis = obj.__dict__
+    quantity = analysis.get('quantity')
+    done_date = analysis.get('done_date')
+    obj = request.dbsession.query(models.Recipe).filter_by(name=analysis['recipe_name']).one()
+    recipe = obj.__dict__
+    print('recipe:', recipe)
+    if substances := recipe.get('substances'):
+        substances = json.loads(substances)
+        print('substances:', substances)
+    if solutions := recipe.get('solutions'):
+        solutions = json.loads(solutions)
+        print('solutions:', solutions)
+    breakpoint()
+    next_url = request.route_url('analysis_done')
+    return HTTPFound(location=next_url)
 
 
 #===========================

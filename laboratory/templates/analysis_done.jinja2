@@ -27,7 +27,8 @@
     <td>{{ item['quantity'] }}</td>
     <td>{{ item['done_date'] }}</td>
     <td>{{ '%0.2f'|format(item['total_cost']|float) }}</td>
-    <td><a href="/delete-analysis/{{item['id']}}" class="btn btn-danger">Видалити</a></td>
+    <td><a href="/delete-analysis/{{item['id']}}" 
+         title="УВАГА! ОПЕРАЦІЯ НЕЗВОРОТНЯ. Відміняє запис про аналіз і видаляє записи про розход речовин на складі реактивів і в журналі розчинів, усіх що використані для цього аналізу у відповідній кількості!" class="btn btn-danger">Видалити</a></td>
     </tr>
     {% endfor %}
   </tbody>

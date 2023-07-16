@@ -22,3 +22,4 @@ test
 alembic/
 #.sqlite
 .idea/
+laboratory.log

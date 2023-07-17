@@ -21,6 +21,7 @@
 			<th>Дата виготовлення</th>
       <th>Придатний до</th>
       <th>Примітка</th>
+      <th>Видалити</th>
     </tr>
   </thead>
   <tbody>
@@ -36,6 +37,16 @@
 			<td>{{ item['created_at'] }}</td>
       <td>{{ item['due_date'] }}</td>
 			<td>{{ item['notes'] }}</td>
+      <td>
+        {% if item['amount'] > 0 %}
+          <a href="/delete-solution/{{ item['id']}}"
+           title="УВАГА! ОПЕРАЦІЯ НЕЗВОРОТНЯ. Відміняє запис про розчин і видаляє записи про розход речовин на складі реактивів, усіх що використані для цього розчину у відповідній кількості!" class="btn btn-xs btn-danger">
+           <i class="glyphicon glyphicon-trash icon-muted"></i>
+          </a>
+        {% else %}
+          <p>Можна видалити запис тільки приходу розчину.</p>
+        {% endif %}
+      </td>
     </tr>
     {% endfor %}
   </tbody>

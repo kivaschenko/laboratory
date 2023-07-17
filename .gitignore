@@ -22,4 +22,5 @@ test
 alembic/
 #.sqlite
 .idea/
+.vscode/
 laboratory.log

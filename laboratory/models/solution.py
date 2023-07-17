@@ -13,7 +13,7 @@ class Solution(Base):
     __tablename__ = 'solutions'
     id = Column(Integer, primary_key=True)
     normative = Column(String(255))
-    measurement = Column(String)    
+    measurement = Column(String)
     amount = Column(Numeric)
     remainder = Column(Numeric)
     price = Column(Numeric)

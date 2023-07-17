@@ -9,12 +9,12 @@ import pandas as pd
 from deform.exception import ValidationFailure
 
 from pyramid.view import view_config
-from pyramid.response import Response
 from pyramid.httpexceptions import HTTPFound, HTTPSeeOther
 from sqlalchemy import text, desc
 from sqlalchemy.exc import DBAPIError
 
 from .. import models
+from .default import db_err_msg
 
 # =========
 # SOLUTIONS
@@ -112,7 +112,8 @@ def make_new_solution(request):
         amount = colander.SchemaNode(
             colander.Decimal(),
             validator=colander.Range(
-                min=decimal.Decimal("0.000"), max=decimal.Decimal("1000000.000")
+                min=decimal.Decimal("0.000"),
+                max=decimal.Decimal("1000000.000"),
             ),
             title="Об'єм, вихід в мл або г відповідно типу",
             default=round(output, 3),
@@ -129,7 +130,9 @@ def make_new_solution(request):
         )
         measurement = colander.SchemaNode(
             colander.String(),
-            validator=colander.OneOf([x[0] for x in (("мл", "мл"), ("г", "г"))]),
+            validator=colander.OneOf(
+                [x[0] for x in (("мл", "мл"), ("г", "г"))]
+            ),
             widget=deform.widget.RadioChoiceWidget(
                 values=(("мл", "мл"), ("г", "г")), inline=True
             ),
@@ -142,7 +145,9 @@ def make_new_solution(request):
                 min=datetime.date(datetime.date.today().year - 1, 1, 1),
                 max=datetime.date.today(),
                 min_err=("${val} раніше чим дозволено мінімальну: ${min}"),
-                max_err=("${val} пізніше ніж дозволено максимальну дату: ${max}"),
+                max_err=(
+                    "${val} пізніше ніж дозволено максимальну дату: ${max}"
+                ),
             ),
             title="Дата виготовлення",
             default=datetime.date.today(),
@@ -173,7 +178,9 @@ def make_new_solution(request):
         controls = request.POST.items()
         try:
             appstruct = form.validate(controls)
-            created_at = appstruct["created_at"]  # <- date for outcome substances
+            created_at = appstruct[
+                "created_at"
+            ]  # <- date for outcome substances
             due_date = appstruct["due_date"]
             notes = appstruct["notes"]
             amount = appstruct["amount"].__float__()
@@ -193,7 +200,11 @@ def make_new_solution(request):
             )
             if len(query_stock) == 0:
                 message = f"На складі відсутні всі компоненти!"
-                return {"form": form, "message": message, "normative": normative_name}
+                return {
+                    "form": form,
+                    "message": message,
+                    "normative": normative_name,
+                }
             else:
                 substances_dicts = [qs.__dict__ for qs in query_stock]
                 df = pd.DataFrame.from_records(substances_dicts)
@@ -205,7 +216,11 @@ def make_new_solution(request):
             if len(missing) > 0:
                 missing_string = " ".join(missing)
                 message = f"Відсутні залишки: {missing_string}"
-                return {"form": form, "message": message, "normative": normative_name}
+                return {
+                    "form": form,
+                    "message": message,
+                    "normative": normative_name,
+                }
             new_records = []
             substances_cost = {}
             for key, value in new_data.items():
@@ -214,7 +229,9 @@ def make_new_solution(request):
                 sum_remainder = df_key["amount"].sum()
                 sum_remainder = sum_remainder.__float__()
                 new_remainder = sum_remainder + value
-                subs_price = df_key["total_cost"].sum() / df_key["amount"].sum()
+                subs_price = (
+                    df_key["total_cost"].sum() / df_key["amount"].sum()
+                )
                 subs_price = subs_price.__float__()
                 subs_total_cost = subs_price * value
                 subs_notes = curr_notes
@@ -258,7 +275,9 @@ def make_new_solution(request):
                         "normative": normative_name,
                     }
                 else:
-                    query_solutions_dicts = [qs.__dict__ for qs in query_solutions]
+                    query_solutions_dicts = [
+                        qs.__dict__ for qs in query_solutions
+                    ]
                     df2 = pd.DataFrame.from_records(query_solutions_dicts)
                 got_solutions = df2["normative"].unique().tolist()
                 missing = set(solutions_names) - set(got_solutions)
@@ -286,7 +305,9 @@ def make_new_solution(request):
                             "normative": normative_name,
                         }
                     new_remainder = sol_remainder + value
-                    avg_price = df2_key["total_cost"].sum() / df2_key["amount"].sum()
+                    avg_price = (
+                        df2_key["total_cost"].sum() / df2_key["amount"].sum()
+                    )
                     avg_price = avg_price.__float__()
                     sol_total_cost = avg_price * value
                     sol_notes = curr_notes
@@ -376,7 +397,8 @@ def correct_solution(request):
             colander.Decimal(),
             default=-0.001,
             validator=colander.Range(
-                min=-decimal.Decimal("1000000.000"), max=-decimal.Decimal("0.001")
+                min=-decimal.Decimal("1000000.000"),
+                max=-decimal.Decimal("0.001"),
             ),
             title="Кількість, {}".format(current_measurement),
             description="Число від -1000000.000 до -0.001",
@@ -396,7 +418,9 @@ def correct_solution(request):
                 min=datetime.date(datetime.date.today().year - 1, 1, 1),
                 max=datetime.date.today(),
                 min_err=("${val} раніше чим дозволено мінімальну: ${min}"),
-                max_err=("${val} пізніше ніж дозволено максимальну дату: ${max}"),
+                max_err=(
+                    "${val} пізніше ніж дозволено максимальну дату: ${max}"
+                ),
             ),
             title="Дата списання",
             default=datetime.date.today(),
@@ -437,20 +461,97 @@ def correct_solution(request):
     return {"form": form, "current_solution": current_solution}
 
 
-@view_config(route_name='delete_solution', permission='edit')
+@view_config(
+    route_name="delete_solution",
+    permission="edit",
+    renderer="../templates/delete_solution.jinja2",
+)
 def delete_solution(request):
-    logging.info('Inside deleting solution.')
-    solution_id = request.matchdict.get('solution_id')
+    csrf_token = request.session.get_csrf_token()
+
+    def validate_csrf(node, value):
+        if value != csrf_token:
+            raise ValueError("Bad CSRF token")
+
+    class CSRFSchema(colander.Schema):
+        csrf = colander.SchemaNode(
+            colander.String(),
+            default=csrf_token,
+            validator=validate_csrf,
+            widget=deform.widget.HiddenWidget(),
+        )
+
+    logging.info("Inside deleting solution.")
+    solution_id = request.matchdict.get("solution_id")
     solution_obj = request.dbsession.get(models.Solution, solution_id)
-    print(solution_obj)
-    breakpoint()
-    logging.info('Solution: %s', solution_obj)
-    norm = request.dbsession.query(models.Normative).filter_by(name=solution_obj).one()
-    coef = solution_obj.amount / norm.output
-    if substances := json.loads(norm.data):
-        logging.info('Substances: %s', substances)
-    if solutions := json.loads(norm.solutions):
-        logging.info('Solutions: %s', solutions)
-    next_url = request.route_url("solutions")
-    return HTTPFound(location=next_url)
-    
+    logging.info("Solution: %s", solution_obj)
+
+    class ConfirmDeletingSchema(CSRFSchema):
+        solution_name = colander.SchemaNode(
+            colander.String(),
+            widget=deform.widget.TextInputWidget(readonly=True),
+            default=f'{solution_id} - {solution_obj.normative} ',
+            title='Видалити розчин:',
+            missing=colander.null,
+        )
+
+    schema = ConfirmDeletingSchema().bind(request=request)
+    button = deform.form.Button(name="submit", title="Видалити", type="submit")
+    form = deform.Form(schema, buttons=(button,))
+
+    if "submit" in request.POST:
+        created_at = solution_obj.created_at
+        adopt_date = datetime.datetime(
+            created_at.year, created_at.month, created_at.day
+        )
+        norm = (
+            request.dbsession.query(models.Normative)
+            .filter_by(name=solution_obj.normative)
+            .one()
+        )
+        coef = float(solution_obj.amount / norm.output)
+        normative = norm.__dict__
+        try:
+            if substances := normative.get("data"):
+                substances = json.loads(substances)
+                logging.info("Substances: %s", substances)
+                for name_ in substances:
+                    amount = -coef * substances[name_]
+                    record = (
+                        request.dbsession.query(models.Stock)
+                        .filter_by(substance_name=name_)
+                        .filter_by(amount=amount)
+                        .filter_by(creation_date=adopt_date)
+                        .one()
+                    )
+                    logging.info("Record will be deleted now: %s", record)
+                    request.dbsession.delete(record)
+            else:
+                pass
+            if solutions := normative.get("solutions"):
+                solutions = json.loads(solutions)
+                logging.info("Solutions: %s", solutions)
+                for name_ in solutions:
+                    amount = -coef * solutions[name_]
+                    record = (
+                        request.dbsession.query(models.Solution)
+                        .filter_by(normative=name_)
+                        .filter_by(amount=amount)
+                        .filter_by(created_at=solution_obj.created_at)
+                        .one()
+                    )
+                    logging.info("Record will be deleted now: %s", record)
+                    request.dbsession.delete(record)
+            else:
+                pass
+            request.dbsession.delete(solution_obj)
+            logging.info("Completed deleting.")
+            next_url = request.route_url("solutions")
+            return HTTPFound(location=next_url)
+        except Exception as exc:
+            logging.error(
+                "Something went wrong durin deleting of solution %s. Exception: %s",
+                solution_obj,
+                exc,
+            )
+    return {"form": form}

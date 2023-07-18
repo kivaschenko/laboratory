@@ -14,7 +14,6 @@ from sqlalchemy.exc import DBAPIError
 from .. import models
 from .default import db_err_msg
 
-
 # ========
 # ANALYSIS
 
@@ -62,7 +61,9 @@ def add_done_analysis(request):
             default=datetime.date.today(),
         )
         quantity = colander.SchemaNode(
-            colander.Integer(), title="кількість виконаних досліджень", default=1
+            colander.Integer(),
+            title="кількість виконаних досліджень",
+            default=1,
         )
 
     schema = AddAnalysisSchema().bind(request=request)
@@ -111,12 +112,20 @@ def add_done_analysis(request):
     порахувати середню ціну, тому ділення на 0! Відкорегуйте залишок {key}".format(
                             key=key
                         )
-                        return {"form": form, "message": message, "recipe": recipe}
+                        return {
+                            "form": form,
+                            "message": message,
+                            "recipe": recipe,
+                        }
                     new_remainder = sum_remainder + value
-                    avg_price = df_key["total_cost"].sum() / df_key["amount"].sum()
+                    avg_price = (
+                        df_key["total_cost"].sum() / df_key["amount"].sum()
+                    )
                     avg_price = avg_price.__float__()
                     subs_total_cost = avg_price * value
-                    subs_notes = f"Аналіз {recipe_name} в кількості: {quantity}"
+                    subs_notes = (
+                        f"Аналіз {recipe_name} в кількості: {quantity}"
+                    )
                     new_stock = models.Stock(
                         substance_name=key,
                         measurement=subs_measurement,
@@ -153,7 +162,9 @@ def add_done_analysis(request):
                     message = f"Немає готових розчинів для цього аналізу."
                     return {"form": form, "message": message, "recipe": recipe}
                 else:
-                    query_solutions_dicts = [qs.__dict__ for qs in query_solutions]
+                    query_solutions_dicts = [
+                        qs.__dict__ for qs in query_solutions
+                    ]
                     df2 = pd.DataFrame.from_records(query_solutions_dicts)
                 got_solutions = df2["normative"].unique().tolist()
                 missing = set(solutions_names) - set(got_solutions)
@@ -173,9 +184,15 @@ def add_done_analysis(request):
     порахувати середню ціну, тому ділення на 0! Відкорегуйте залишок {key}".format(
                             key=key
                         )
-                        return {"form": form, "message": message, "recipe": recipe}
+                        return {
+                            "form": form,
+                            "message": message,
+                            "recipe": recipe,
+                        }
                     new_remainder = sol_remainder + value
-                    avg_price = df2_key["total_cost"].sum() / df2_key["amount"].sum()
+                    avg_price = (
+                        df2_key["total_cost"].sum() / df2_key["amount"].sum()
+                    )
                     avg_price = avg_price.__float__()
                     sol_total_cost = avg_price * value
                     sol_notes = f"Аналіз {recipe_name} в кількості: {quantity}"
@@ -233,59 +250,98 @@ def analysis_history(request):
     return {"analysises": analysises, "message": message}
 
 
-@view_config(route_name="delete_analysis", permission="edit")
+@view_config(
+    route_name="delete_analysis",
+    permission="edit",
+    renderer="../templates/delete_analysis.jinja2",
+)
 def delete_analysis(request):
-    logging.info('Inside deleting analysis.')
+    csrf_token = request.session.get_csrf_token()
+    
+    def validate_csrf(node, value):
+        if value != csrf_token:
+            raise ValueError("Bad CSRF token")
+    class CSRFSchema(colander.Schema):
+        csrf = colander.SchemaNode(
+            colander.String(),
+            default=csrf_token,
+            validator=validate_csrf,
+            widget=deform.widget.HiddenWidget()
+        )
+
+    logging.info("Inside deleting analysis.")
     analysis_id = request.matchdict["analysis_id"]
     analysis_obj = request.dbsession.get(models.Analysis, analysis_id)
-    logging.info('Analysis: %s', analysis_obj)
-    analysis = analysis_obj.__dict__
-    quantity = analysis.get("quantity")
-    done_date = analysis.get("done_date")
-    adopt_date = datetime.datetime(done_date.year, done_date.month, done_date.day)
-    recipe_obj = (
-        request.dbsession.query(models.Recipe)
-        .filter_by(name=analysis["recipe_name"])
-        .one()
-    )
-    recipe = recipe_obj.__dict__
-    try:
-        if substances := recipe.get("substances"):
-            substances = json.loads(substances)
-            logging.info('Substances: %s', substances)
-            for name_ in substances:
-                amount = -quantity * substances[name_]
-                record = (
-                    request.dbsession.query(models.Stock)
-                    .filter_by(substance_name=name_)
-                    .filter_by(amount=amount)
-                    .filter_by(creation_date=adopt_date)
-                    .one()
-                )
-                logging.info('Record will be deleted now: %s', record)
-                request.dbsession.delete(record)
-        else:
-            pass
-        if solutions := recipe.get("solutions"):
-            solutions = json.loads(solutions)
-            logging.info('Solutions: %s', solutions)
-            for name_ in solutions:
-                amount = -quantity * solutions[name_]
-                record = (
-                    request.dbsession.query(models.Solution)
-                    .filter_by(normative=name_)
-                    .filter_by(amount=amount)
-                    .filter_by(created_at=done_date)
-                    .one()
-                )
-                logging.info('Record will be deleted now: %s', record)
-                request.dbsession.delete(record)
-        else:
-            pass
-        # delete current analysis
-        request.dbsession.delete(analysis_obj)
-        logging.info('Completed deleting.')
-    except Exception as exc:
-        logging.error('Something went wrong durin deleting of analysis %s. Exception: %s', analysis_obj, exc)
-    next_url = request.route_url("analysis_done")
-    return HTTPFound(location=next_url)
+    logging.info("Analysis: %s", analysis_obj)
+
+    class ConfirmDeletingSchema(CSRFSchema):
+        analysis_name = colander.SchemaNode(
+            colander.String(),
+            widget=deform.widget.TextInputWidget(readonly=True),
+            default=f'{analysis_id} - {analysis_obj.recipe_name}',
+            title='Видалити аналіз:',
+            missing=colander.null
+        )
+
+    schema = ConfirmDeletingSchema().bind(request=request)
+    button = deform.form.Button(name='submit', title='Видалити', type='submit')
+    form = deform.Form(schema, buttons=(button,))
+
+    if 'submit' in request.POST:
+        analysis = analysis_obj.__dict__
+        quantity = analysis.get("quantity")
+        done_date = analysis.get("done_date")
+        adopt_date = datetime.datetime(
+            done_date.year, done_date.month, done_date.day
+        )
+        recipe_obj = (
+            request.dbsession.query(models.Recipe)
+            .filter_by(name=analysis["recipe_name"])
+            .one()
+        )
+        recipe = recipe_obj.__dict__
+        try:
+            if substances := recipe.get("substances"):
+                substances = json.loads(substances)
+                logging.info("Substances: %s", substances)
+                for name_ in substances:
+                    amount = -quantity * substances[name_]
+                    record = (
+                        request.dbsession.query(models.Stock)
+                        .filter_by(substance_name=name_)
+                        .filter_by(amount=amount)
+                        .filter_by(creation_date=adopt_date)
+                        .one()
+                    )
+                    logging.info("Record will be deleted now: %s", record)
+                    request.dbsession.delete(record)
+            else:
+                pass
+            if solutions := recipe.get("solutions"):
+                solutions = json.loads(solutions)
+                logging.info("Solutions: %s", solutions)
+                for name_ in solutions:
+                    amount = -quantity * solutions[name_]
+                    record = (
+                        request.dbsession.query(models.Solution)
+                        .filter_by(normative=name_)
+                        .filter_by(amount=amount)
+                        .filter_by(created_at=done_date)
+                        .one()
+                    )
+                    logging.info("Record will be deleted now: %s", record)
+                    request.dbsession.delete(record)
+            else:
+                pass
+            # delete current analysis
+            request.dbsession.delete(analysis_obj)
+            logging.info("Completed deleting.")
+            next_url = request.route_url("analysis_done")
+            return HTTPFound(location=next_url)
+        except Exception as exc:
+            logging.error(
+                "Something went wrong durin deleting of analysis %s. Exception: %s",
+                analysis_obj,
+                exc,
+            )
+    return {'form': form}

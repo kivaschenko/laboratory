@@ -1,0 +1,10 @@
+{% extends 'layout.jinja2' %}
+
+{% block content %}
+<div class="content">
+<h2><span class="lead font-semi-bold">Видалити запис з БД про аналіз</span><br>
+<span class="lead">і пов'язані записи розходу реактивів і розчинів</span></h2>
+<p><span class="lead font-semi-bold">{{ message }}</span></p>
+{{ form.render()|safe }}
+</div>
+{% endblock %}

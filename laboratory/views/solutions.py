@@ -500,6 +500,7 @@ def delete_solution(request):
     form = deform.Form(schema, buttons=(button,))
 
     if "submit" in request.POST:
+        logging.info("Start deleting solution.")
         created_at = solution_obj.created_at
         adopt_date = datetime.datetime(
             created_at.year, created_at.month, created_at.day
@@ -517,15 +518,15 @@ def delete_solution(request):
                 logging.info("Substances: %s", substances)
                 for name_ in substances:
                     amount = -coef * substances[name_]
-                    record = (
+                    records = (
                         request.dbsession.query(models.Stock)
                         .filter_by(substance_name=name_)
                         .filter_by(amount=amount)
                         .filter_by(creation_date=adopt_date)
-                        .one()
+                        .all()
                     )
-                    logging.info("Record will be deleted now: %s", record)
-                    request.dbsession.delete(record)
+                    logging.info("Record will be deleted now: %s", records[-1])
+                    request.dbsession.delete(records[-1])
             else:
                 pass
             if solutions := normative.get("solutions"):
@@ -538,10 +539,10 @@ def delete_solution(request):
                         .filter_by(normative=name_)
                         .filter_by(amount=amount)
                         .filter_by(created_at=solution_obj.created_at)
-                        .one()
+                        .all()
                     )
-                    logging.info("Record will be deleted now: %s", record)
-                    request.dbsession.delete(record)
+                    logging.info("Record will be deleted now: %s", records[-1])
+                    request.dbsession.delete(records[-1])
             else:
                 pass
             request.dbsession.delete(solution_obj)

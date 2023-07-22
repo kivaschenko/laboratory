@@ -288,6 +288,7 @@ def delete_analysis(request):
     form = deform.Form(schema, buttons=(button,))
 
     if 'submit' in request.POST:
+        logging.info("Start deleting analysis.")
         analysis = analysis_obj.__dict__
         quantity = analysis.get("quantity")
         done_date = analysis.get("done_date")
@@ -306,15 +307,15 @@ def delete_analysis(request):
                 logging.info("Substances: %s", substances)
                 for name_ in substances:
                     amount = -quantity * substances[name_]
-                    record = (
+                    records = (
                         request.dbsession.query(models.Stock)
                         .filter_by(substance_name=name_)
                         .filter_by(amount=amount)
                         .filter_by(creation_date=adopt_date)
-                        .one()
+                        .all()
                     )
-                    logging.info("Record will be deleted now: %s", record)
-                    request.dbsession.delete(record)
+                    logging.info("Record will be deleted now: %s", records[-1])
+                    request.dbsession.delete(records[-1])
             else:
                 pass
             if solutions := recipe.get("solutions"):
@@ -322,15 +323,15 @@ def delete_analysis(request):
                 logging.info("Solutions: %s", solutions)
                 for name_ in solutions:
                     amount = -quantity * solutions[name_]
-                    record = (
+                    records = (
                         request.dbsession.query(models.Solution)
                         .filter_by(normative=name_)
                         .filter_by(amount=amount)
                         .filter_by(created_at=done_date)
-                        .one()
+                        .all()
                     )
-                    logging.info("Record will be deleted now: %s", record)
-                    request.dbsession.delete(record)
+                    logging.info("Record will be deleted now: %s", records[-1])
+                    request.dbsession.delete(records[-1])
             else:
                 pass
             # delete current analysis

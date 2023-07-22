@@ -1,0 +1,5 @@
+# Docker
+
+docker build -t laboratory .
+
+docker run -it -p 80:6543 --name lab_app laboratory

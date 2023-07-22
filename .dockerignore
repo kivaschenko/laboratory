@@ -3,7 +3,5 @@ env/
 .gitignore
 laboratory_archive.sqlite
 MANIFEST.in
-development.ini
-pyproject.toml
 .coveragerc
 

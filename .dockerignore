@@ -1,0 +1,13 @@
+.git
+env/
+.gitignore
+.idea/
+laboratory_archive.sqlite
+lab_test.sqliet
+laboratory.log
+MANIFEST.in
+development.ini
+pyproject.toml
+README.txt
+.coveragerc
+

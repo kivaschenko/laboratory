@@ -1,4 +1,4 @@
-from pyramid.security import Allow, Everyone, Authenticated
+from pyramid.authorization import Allow, Everyone, Authenticated
 from pyramid.authentication import AuthTktAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
 

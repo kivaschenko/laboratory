@@ -107,8 +107,9 @@ def statistic_form(request):
                 num_colors = df_subs.shape[0]
                 df_subs["color"] = viridis(num_colors)
                 source = ColumnDataSource(data=df_subs)
+                # Correcting the plot_height attribute to height
                 pieplot = figure(
-                    plot_height=600,
+                    height=600,
                     sizing_mode="scale_both",
                     title="Частки витрат речовин, грн.",
                     toolbar_location=None,
@@ -153,7 +154,7 @@ def statistic_form(request):
                 plot_an = figure(
                     y_range=df_an["analysis"].tolist(),
                     x_range=(0, df_an["numbers"].max()),
-                    plot_height=450,
+                    height=450,
                     sizing_mode="scale_both",
                     title="Кількість виконаних аналізів",
                     toolbar_location=None,

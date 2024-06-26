@@ -141,7 +141,7 @@ def statistic_form(request):
                     WHERE analysis.done_date BETWEEN :x AND :y
                     GROUP BY analysis.recipe_name ORDER BY numbers DESC"""
                 analysis_q = request.dbsession.execute(
-                    analysis_sql, {"x": start, "y": end}
+                    text(analysis_sql), {"x": start, "y": end}
                 ).fetchall()
                 df_an = pd.DataFrame.from_records(
                     analysis_q,

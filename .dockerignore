@@ -4,4 +4,6 @@ env/
 laboratory_archive.sqlite
 MANIFEST.in
 .coveragerc
-
+*.egg
+*.egg-info
+*.pyc

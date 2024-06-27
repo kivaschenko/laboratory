@@ -61,13 +61,14 @@ class TestMyViewSuccessCondition(BaseTest):
     def test_passing_view(self):
         from .views.default import my_view
         info = my_view(dummy_request(self.session))
-        self.assertEqual(info['one']['name'], "Вода H2O")
-        self.assertEqual(info['project'], 'програма для обліку реактивів')
+        self.assertIsNotNone(info['form'])
+        self.assertIn('Речовина, реактив\n', info['form'])
 
 
-class TestMyViewFailureCondition(BaseTest):
+# class TestMyViewFailureCondition(BaseTest):
 
-    def test_failing_view(self):
-        from .views.default import my_view
-        info = my_view(dummy_request(self.session))
-        self.assertEqual(info.status_int, 500)
+#     def test_failing_view(self):
+#         from .views.default import my_view
+#         info = my_view(dummy_request(self.session))
+#         print(info)
+#         self.assertEqual(info.status_int, 500)

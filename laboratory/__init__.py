@@ -12,6 +12,7 @@ def main(global_config, **settings):
         config.include('pyramid_jinja2')
         config.include('.routes')
         config.include('.security')
+        config.add_static_view(name="static", path="laboratory:static", cache_max_age=3600)
         config.add_static_view('deform_static', 'deform:static/')
         config.scan()
     return config.make_wsgi_app()

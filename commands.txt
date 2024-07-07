@@ -3,3 +3,10 @@
 docker build -t laboratory .
 
 docker run -it -p 80:6543 --name lab_app laboratory
+
+
+# Deployment in container on Azure
+
+az containerapp up \
+> --resource-group web-pyramid-lab-rg --name web-lab-app \
+> --ingress external --target-port 6543 --source .

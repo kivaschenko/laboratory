@@ -1,26 +1,107 @@
-*.egg
-*.egg-info
+# Environment files
+.env
+.env.local
+.env.production
+
+# Database files
+*.sqlite
+*.db
+
+# Python cache
+__pycache__/
 *.pyc
 *$py.class
-*~
-.coverage
-coverage.xml
+*.so
+.Python
 build/
+develop-eggs/
 dist/
-.tox/
-nosetests.xml
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg
+*.egg-info/
+.installed.cfg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
 env*/
-# tmp/
-Data.fs*
+ENV/
+env.bak/
+venv.bak/
+
+# IDE files
+.vscode/
+.idea/
 *.sublime-project
 *.sublime-workspace
+*.swp
+*.swo
+*~
 .*.sw?
 .sw?
+
+# OS generated files
 .DS_Store
-coverage
-test
-alembic/
-#.sqlite
-.idea/
-.vscode/
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
 laboratory.log
+
+# Coverage reports
+htmlcov/
+.tox/
+.coverage
+coverage
+coverage.xml
+.cache
+nosetests.xml
+test
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# Docker
+docker-compose.override.yml
+
+# Backup files
+*.bak
+*.backup
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+
+# Security files
+*.pem
+*.key
+*.crt
+ssl/
+
+# Alembic
+alembic/versions/*.py
+
+# Data files
+Data.fs*

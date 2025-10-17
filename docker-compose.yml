@@ -1,0 +1,63 @@
+version: "3.8"
+
+services:
+  web:
+    build: .
+    ports:
+      - "6543:6543"
+    environment:
+      - SQLALCHEMY_URL=postgresql://laboratory:laboratory@db:5432/laboratory
+      - AUTH_SECRET=${AUTH_SECRET:-your-secret-key-change-in-production}
+      - PYRAMID_DEBUG=true
+      - PYRAMID_RELOAD_TEMPLATES=true
+    volumes:
+      - .:/app
+      - laboratory_data:/app/data
+    depends_on:
+      - db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6543/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=laboratory
+      - POSTGRES_USER=laboratory
+      - POSTGRES_PASSWORD=laboratory
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U laboratory"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  postgres_data:
+  redis_data:
+  laboratory_data:
+
+networks:
+  default:
+    name: laboratory_network

@@ -114,7 +114,7 @@ def my_view(request):
             return HTTPSeeOther(next_url)
         except ValidationFailure as e:
             return {"form": e.render(), "message": message}
-    return {"form": form.render(), "form": form.render()}
+    return {"form": form.render(), "message": message}
 
 
 # ===================================

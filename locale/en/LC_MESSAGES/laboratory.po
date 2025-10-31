@@ -104,6 +104,15 @@ msgstr "In the Warehouse section, aggregation of the Total amount for each reage
 msgid "home.faq_5"
 msgstr "Warehouse income can be made with a minus sign in the Quantity field of the form. This can be useful when you need to adjust balances after inventory, when an excess of some reagent (substance) is found. Then the Price in the form should be average, which can be taken from the Warehouse section for this reagent."
 
+msgid "home.faq_5_additional"
+msgstr "Or at your own discretion. Keep in mind that zero price will change the average price!"
+
+msgid "home.faq_6"
+msgstr "For expense statistics display, keep in mind that the later date is not included. That is, if you need to view from March 15 to March 16, then select dates 03/15/2021 - 03/17/2021"
+
+msgid "home.faq_7"
+msgstr "Since the program works via the internet - it is advisable to periodically change the password, at least once every three months."
+
 # Stock page
 msgid "stock.title"
 msgstr "Substance Warehouse"
@@ -167,3 +176,106 @@ msgstr "Last"
 # Authentication
 msgid "auth.login_failed"
 msgstr "Failed login or password!"
+
+# Buy substance page
+msgid "buy_substance.title"
+msgstr "Warehouse income of reagent (substance, indicator)"
+
+# Add substance page
+msgid "add_substance.title"
+msgstr "Add new name to the catalog of reagents (substances, indicators)"
+
+# Error pages
+msgid "error.404_code"
+msgstr "error 404"
+
+msgid "error.404_message"
+msgstr "page not found"
+
+# Substances edit page
+msgid "substances_edit.title"
+msgstr "Edit reagent catalog"
+
+msgid "substances_edit.new_reagent"
+msgstr "New reagent to catalog"
+
+msgid "substances_edit.delete"
+msgstr "Delete"
+
+# Error messages and notifications
+msgid "No normatives in the list."
+msgstr "No normatives in the list."
+
+msgid "Reagent catalog is empty! Cannot create recipe."
+msgstr "Reagent catalog is empty! Cannot create recipe."
+
+msgid "This name already exists!"
+msgstr "This name already exists!"
+
+# Form field labels - Normatives
+msgid "Solution name"
+msgstr "Solution name"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "solution"
+msgstr "solution"
+
+msgid "mixture"
+msgstr "mixture"
+
+msgid "mark if this solution is used as a component of another solution"
+msgstr "mark if this solution is used as a component of another solution"
+
+msgid "Used as component"
+msgstr "Used as component"
+
+msgid "Volume, yield in ml or g according to type"
+msgstr "Volume, yield in ml or g according to type"
+
+msgid "Number in format 999999.999"
+msgstr "Number in format 999999.999"
+
+msgid "Substances - mark required:"
+msgstr "Substances - mark required:"
+
+msgid "Solutions as components - mark required:"
+msgstr "Solutions as components - mark required:"
+
+msgid "Next"
+msgstr "Next"
+
+msgid "Create recipe"
+msgstr "Create recipe"
+
+# Recipes
+msgid "No added analysis recipes."
+msgstr "No added analysis recipes."
+
+msgid "Analysis name"
+msgstr "Analysis name"
+
+msgid "enter unique analysis name"
+msgstr "enter unique analysis name"
+
+msgid "Substances"
+msgstr "Substances"
+
+msgid "select required substances"
+msgstr "select required substances"
+
+msgid "Solutions"
+msgstr "Solutions"
+
+msgid "select needed solutions"
+msgstr "select needed solutions"
+
+msgid "Create new analysis"
+msgstr "Create new analysis"
+
+msgid "This analysis name already exists!"
+msgstr "This analysis name already exists!"
+
+msgid "Check form fields"
+msgstr "Check form fields"

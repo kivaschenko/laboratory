@@ -11,10 +11,12 @@ from deform.exception import ValidationFailure
 from pyramid.view import view_config
 from pyramid.response import Response
 from pyramid.httpexceptions import HTTPFound, HTTPSeeOther
+from pyramid.i18n import TranslationString as _, get_localizer
 from sqlalchemy import text, desc, func
 from sqlalchemy.exc import DBAPIError
 
 from .. import models
+
 
 # ==================
 # RECIPES
@@ -22,6 +24,7 @@ from .. import models
     route_name="recipes", renderer="../templates/recipes.jinja2", permission="read"
 )
 def all_recipes(request):
+    localizer = get_localizer(request)
     message = ""
     query = (
         request.dbsession.query(models.Recipe.id, models.Recipe.name)
@@ -29,7 +32,7 @@ def all_recipes(request):
         .all()
     )
     if len(query) == 0:
-        message = "Немає доданих рецептів аналізів."
+        message = localizer.translate(_("No added analysis recipes."))
     return {"recipes": query, "message": message}
 
 
@@ -39,6 +42,7 @@ def all_recipes(request):
     permission="read",
 )
 def edit_recipes(request):
+    localizer = get_localizer(request)
     message = ""
     query = (
         request.dbsession.query(models.Recipe.id, models.Recipe.name)
@@ -46,7 +50,7 @@ def edit_recipes(request):
         .all()
     )
     if len(query) == 0:
-        message = "Немає доданих рецептів аналізів."
+        message = localizer.translate(_("No added analysis recipes."))
     return {"recipes": query, "message": message}
 
 

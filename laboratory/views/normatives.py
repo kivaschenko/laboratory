@@ -9,6 +9,7 @@ from deform.exception import ValidationFailure
 from pyramid.view import view_config
 from pyramid.response import Response
 from pyramid.httpexceptions import HTTPFound, HTTPSeeOther
+from pyramid.i18n import TranslationString as _, get_localizer
 from sqlalchemy import text, desc, func
 
 from .. import models
@@ -23,6 +24,7 @@ from .. import models
     renderer="../templates/normative_list.jinja2",
 )
 def get_all_normatives(request):
+    localizer = get_localizer(request)
     message = ""
     normative_query = (
         request.dbsession.query(models.Normative).order_by(models.Normative.name).all()
@@ -37,7 +39,7 @@ def get_all_normatives(request):
             else:
                 norm["solutions"] = {}
     else:
-        message = "Немає нормативів у списку."
+        message = localizer.translate(_("No normatives in the list."))
     return {"message": message, "normative_list": normative_list}
 
 
@@ -47,6 +49,7 @@ def get_all_normatives(request):
     renderer="../templates/normative_edit.jinja2",
 )
 def edit_normatives(request):
+    localizer = get_localizer(request)
     message = ""
     normative_query = (
         request.dbsession.query(models.Normative).order_by(models.Normative.name).all()
@@ -61,7 +64,7 @@ def edit_normatives(request):
             else:
                 norm["solutions"] = {}
     else:
-        message = "Немає нормативів у списку."
+        message = localizer.translate(_("No normatives in the list."))
     return {"message": message, "normative_list": normative_list}
 
 
@@ -80,6 +83,7 @@ def delete_normative(request):
     renderer="../templates/new_normative.jinja2",
 )
 def new_normative(request):
+    localizer = get_localizer(request)
     message = ""
     csrf_token = request.session.get_csrf_token()
 
@@ -101,7 +105,9 @@ def new_normative(request):
     if len(subs_query) > 0:
         subs_list = [q.__dict__ for q in subs_query]
     else:
-        message = "Каталог реактивів пустий! Неможливо створити рецепт."
+        message = localizer.translate(
+            _("Reagent catalog is empty! Cannot create recipe.")
+        )
         return {"message": message}
     choices = [(subs["id"], subs["name"]) for subs in subs_list]
     # create a list of solutions that may be as components: choices_soluttions
@@ -117,22 +123,36 @@ def new_normative(request):
     choices_soluttions = [(solut["id"], solut["name"]) for solut in solut_list]
 
     class NormativeSchema(CSRFSchema):
-        name = colander.SchemaNode(colander.String(), title="Назва розчину")
+        name = colander.SchemaNode(
+            colander.String(), title=localizer.translate(_("Solution name"))
+        )
         type = colander.SchemaNode(
             colander.String(),
             validator=colander.OneOf(
-                [x[0] for x in (("solution", "розчин"), ("mixture", "суміш"))]
+                [
+                    x[0]
+                    for x in (
+                        ("solution", localizer.translate(_("solution"))),
+                        ("mixture", localizer.translate(_("mixture"))),
+                    )
+                ]
             ),
             widget=deform.widget.RadioChoiceWidget(
-                values=(("solution", "розчин"), ("mixture", "суміш")), inline=True
+                values=(
+                    ("solution", localizer.translate(_("solution"))),
+                    ("mixture", localizer.translate(_("mixture"))),
+                ),
+                inline=True,
             ),
-            title="Тип",
+            title=localizer.translate(_("Type")),
         )
         as_subst = colander.SchemaNode(
             colander.Boolean(),
-            description="відмітити якщо цей розчин використовується як складова частина іншого розчину",
+            description=localizer.translate(
+                _("mark if this solution is used as a component of another solution")
+            ),
             widget=deform.widget.CheckboxWidget(),
-            title="Використовується як компонент",
+            title=localizer.translate(_("Used as component")),
         )
         output = colander.SchemaNode(
             colander.Decimal(),
@@ -140,8 +160,8 @@ def new_normative(request):
             validator=colander.Range(
                 min=decimal.Decimal("0.000"), max=decimal.Decimal("1000000.000")
             ),
-            title="Об'єм, вихід в мл або г відповідно типу",
-            description="Число у форматі 999999.999",
+            title=localizer.translate(_("Volume, yield in ml or g according to type")),
+            description=localizer.translate(_("Number in format 999999.999")),
             widget=deform.widget.TextInputWidget(
                 attributes={
                     "type": "numeric",
@@ -154,17 +174,19 @@ def new_normative(request):
         )
         data = colander.SchemaNode(
             colander.Set(),
-            title="Речовини - відмітити необхідні:",
+            title=localizer.translate(_("Substances - mark required:")),
             widget=deform.widget.CheckboxChoiceWidget(values=choices),
         )
         solutions = colander.SchemaNode(
             colander.Set(),
-            title="Розчини як компоненти - відмітити необхідні:",
+            title=localizer.translate(_("Solutions as components - mark required:")),
             widget=deform.widget.CheckboxChoiceWidget(values=choices_soluttions),
         )
 
     schema = NormativeSchema().bind(request=request)
-    button = deform.form.Button(name="submit", title="Далі", type="submit")
+    button = deform.form.Button(
+        name="submit", title=localizer.translate(_("Next")), type="submit"
+    )
     form = deform.Form(schema, buttons=(button,), autocomplete="off")
     if request.method == "POST" and "submit" in request.POST:
         controls = request.POST.items()
@@ -177,7 +199,10 @@ def new_normative(request):
                 .all()
             )
             if len(check_query) > 0:
-                return {"message": "Така назва вже існує!", "form": form}
+                return {
+                    "message": localizer.translate(_("This name already exists!")),
+                    "form": form,
+                }
             next_url = request.route_url("new_norm_next", **appstruct)
             return HTTPFound(location=next_url)
         except ValidationFailure as e:
@@ -191,6 +216,7 @@ def new_normative(request):
     renderer="../templates/new_norm_next.jinja2",
 )
 def new_norm_next(request):
+    localizer = get_localizer(request)
     message = ""
     csrf_token = request.session.get_csrf_token()
 
@@ -293,7 +319,9 @@ def new_norm_next(request):
                     )
 
     schema = NextFormSchema().bind(request=request)
-    button = deform.form.Button(name="submit", title="Створити рецепт", type="submit")
+    button = deform.form.Button(
+        name="submit", title=localizer.translate(_("Create recipe")), type="submit"
+    )
     form = deform.Form(schema, buttons=(button,))
     if request.method == "POST" and "submit" in request.POST:
         controls = request.POST.items()

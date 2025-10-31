@@ -2,10 +2,13 @@ from pyramid.httpexceptions import HTTPFound
 from deform.exception import ValidationFailure
 from pyramid.view import view_config, forbidden_view_config
 from pyramid.security import remember, forget
+from pyramid.i18n import TranslationStringFactory
 import colander
 import deform
 
 from ..models import User
+
+_ = TranslationStringFactory("laboratory")
 
 
 @view_config(renderer="../templates/login.jinja2", route_name="login")
@@ -53,7 +56,7 @@ def login(request):
                 return HTTPFound(location=next_url, headers=headers)
             else:
                 headers = forget(request)
-                message = "Failed login or password!"
+                message = str(_("auth.login_failed"))
         except ValidationFailure as e:
             return {"form": e, "message": message}
     return {"form": form, "message": message}

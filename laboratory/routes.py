@@ -1,6 +1,7 @@
 def includeme(config):
     # config.add_static_view("static", "static", cache_max_age=3600)
     config.add_route("home", "/", factory="laboratory.security.LabFactory")
+    config.add_route("set_locale", "/set_locale")
     config.add_route(
         "archive_filter",
         "archive-filter/{type_item}/{name_item}/{direction}/{start_date}/{end_date}",
@@ -85,9 +86,7 @@ def includeme(config):
         "/new-recipe-next/{name}/{solutions}/{substances}",
         factory="laboratory.security.LabFactory",
     )
-    config.add_route(
-        "recipes", "/recipes", factory="laboratory.security.LabFactory"
-    )
+    config.add_route("recipes", "/recipes", factory="laboratory.security.LabFactory")
     config.add_route(
         "recipes_edit",
         "/recipes/edit",
@@ -120,9 +119,7 @@ def includeme(config):
     )
 
     # stock
-    config.add_route(
-        "stock", "/stock", factory="laboratory.security.LabFactory"
-    )
+    config.add_route("stock", "/stock", factory="laboratory.security.LabFactory")
     config.add_route(
         "buy_substance",
         "/buy-substance",

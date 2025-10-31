@@ -20,6 +20,11 @@ def main(global_config, **settings):
     with Configurator(settings=settings, session_factory=session_factory) as config:
         config.include(".models")
         config.include("pyramid_jinja2")
+
+        # Configure i18n
+        config.add_translation_dirs("laboratory:../locale/")
+        config.set_locale_negotiator(locale_negotiator)
+
         config.include(".routes")
         config.include(".security")
         config.add_static_view(
@@ -28,3 +33,24 @@ def main(global_config, **settings):
         config.add_static_view("deform_static", "deform:static/")
         config.scan()
     return config.make_wsgi_app()
+
+
+def locale_negotiator(request):
+    """Negotiate locale from request parameters, session, or browser headers."""
+    # Check for explicit locale parameter
+    locale = request.params.get("_LOCALE_")
+    if locale:
+        request.session["_LOCALE_"] = locale
+        return locale
+
+    # Check session
+    locale = request.session.get("_LOCALE_")
+    if locale:
+        return locale
+
+    # Check Accept-Language header
+    settings = request.registry.settings
+    available_locales = settings.get("pyramid.available_languages", "en uk").split()
+
+    # Default fallback
+    return request.accept_language.best_match(available_locales, default_match="en")

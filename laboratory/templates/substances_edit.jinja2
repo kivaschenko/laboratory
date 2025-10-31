@@ -2,16 +2,16 @@
 
 {% block content %}
 <div class="content">
-<h2><span class="smaller font-bold">Редагувати каталог реактивів</span></h2>
+<h2><span class="smaller font-bold">{{ _('substances_edit.title') }}</span></h2>
 <hr>
-<a href="/add_substance" class="btn btn-success">Новий реактив в каталог</a>
+<a href="/add_substance" class="btn btn-success">{{ _('substances_edit.new_reagent') }}</a>
 <table class="table">
     <thead>
         <tr>
             <th>#</th>
-            <th>Назва</th>
-            <th>Од. виміру</th>
-            <th>Видалити</th>
+            <th>{{ _('substances.name') }}</th>
+            <th>{{ _('substances.unit_measurement') }}</th>
+            <th>{{ _('substances_edit.delete') }}</th>
         </tr>
     </thead>
     <tbody>
@@ -26,7 +26,7 @@
         </tr>
             {% endfor %}
         {% else %}
-        <tr>немає нічого в каталозі</tr>
+        <tr>{{ _('substances.no_items') }}</tr>
         {% endif %}
     </tbody>
 </table>

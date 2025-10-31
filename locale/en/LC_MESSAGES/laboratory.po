@@ -1,0 +1,281 @@
+# English translations for Laboratory Management System.
+# Copyright (C) 2025 Kostiantyn Ivaschenko
+# This file is distributed under the same license as the laboratory project.
+msgid ""
+msgstr ""
+"Project-Id-Version: Laboratory Management System 1.0.0\n"
+"Report-Msgid-Bugs-To: kivaschenko@gmail.com\n"
+"POT-Creation-Date: 2025-10-31 14:21+0200\n"
+"PO-Revision-Date: 2025-10-31 14:30+0200\n"
+"Last-Translator: Kostiantyn Ivaschenko <kivaschenko@gmail.com>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+# Application title
+msgid "app.title"
+msgstr "Laboratory Reagent Management System"
+
+# Language selector
+msgid "language.switch"
+msgstr "Language"
+
+# Navigation
+msgid "navigation.home"
+msgstr "Home"
+
+msgid "navigation.warehouse"
+msgstr "Warehouse"
+
+msgid "navigation.substance_catalog"
+msgstr "Substance Catalog"
+
+msgid "navigation.warehouse_income"
+msgstr "Warehouse Income"
+
+msgid "navigation.warehouse_history"
+msgstr "Warehouse History"
+
+msgid "navigation.solutions_mixtures"
+msgstr "Solutions & Mixtures"
+
+msgid "navigation.recipes"
+msgstr "Recipes"
+
+msgid "navigation.journal"
+msgstr "Journal"
+
+msgid "navigation.remainders"
+msgstr "Remainders"
+
+msgid "navigation.analysis"
+msgstr "Analysis"
+
+msgid "navigation.analysis_normatives"
+msgstr "Analysis Standards"
+
+msgid "navigation.completed_analysis"
+msgstr "Completed Analysis"
+
+msgid "navigation.expense_statistics"
+msgstr "Expense Statistics"
+
+msgid "navigation.authorization"
+msgstr "Authorization"
+
+msgid "navigation.login"
+msgstr "Login"
+
+msgid "navigation.logout"
+msgstr "Logout"
+
+msgid "navigation.change_password"
+msgstr "Change Password"
+
+# Home page
+msgid "home.laboratory"
+msgstr "Laboratory"
+
+msgid "home.feed_plant"
+msgstr "feed plant"
+
+msgid "home.journal_filter"
+msgstr "Journal Filter"
+
+msgid "home.faq_help"
+msgstr "Frequently Asked Questions and Help"
+
+msgid "home.faq_1"
+msgstr "Use unique names not only within one catalog, but also between them. That is, the name of a substance cannot be the same as a solution, mixture, or analysis name. Otherwise the program may work incorrectly!"
+
+msgid "home.faq_2"
+msgstr "A new recipe in the 'Recipes' section creates a recipe for both a solution and a mixture (which consists exclusively of dry substances). The required type must be selected in the form."
+
+msgid "home.faq_3"
+msgstr "If a solution recipe is used to account for a solution that is a component of other solutions - you need to check the box in the new recipe creation form 'Used as a component'."
+
+msgid "home.faq_4"
+msgstr "In the Warehouse section, aggregation of the Total amount for each reagent means that (Average price for all Warehouse Receipts and Expenses) * (Sum of quantities of all Receipts and Expenses) = Total amount. The same calculation applies to Solution Remainders. That is, Average price, Total amount per item - this is not an accurate accounting figure, but data for management accounting. To understand at what average accounting price and for approximately what amount there are remainders of a specific item."
+
+msgid "home.faq_5"
+msgstr "Warehouse income can be made with a minus sign in the Quantity field of the form. This can be useful when you need to adjust balances after inventory, when an excess of some reagent (substance) is found. Then the Price in the form should be average, which can be taken from the Warehouse section for this reagent."
+
+msgid "home.faq_5_additional"
+msgstr "Or at your own discretion. Keep in mind that zero price will change the average price!"
+
+msgid "home.faq_6"
+msgstr "For expense statistics display, keep in mind that the later date is not included. That is, if you need to view from March 15 to March 16, then select dates 03/15/2021 - 03/17/2021"
+
+msgid "home.faq_7"
+msgstr "Since the program works via the internet - it is advisable to periodically change the password, at least once every three months."
+
+# Stock page
+msgid "stock.title"
+msgstr "Substance Warehouse"
+
+msgid "stock.subtitle"
+msgstr "aggregated sums by quantity, cost"
+
+msgid "stock.print_instruction"
+msgstr "Click the button to print this page or save as .pdf file"
+
+msgid "stock.print_button"
+msgstr "Print"
+
+msgid "stock.reactant_substance"
+msgstr "Reactant (substance, indicator)"
+
+msgid "stock.unit_measurement"
+msgstr "Unit"
+
+msgid "stock.quantity"
+msgstr "Quantity"
+
+msgid "stock.average_price"
+msgstr "Average price, UAH"
+
+msgid "stock.total_sum"
+msgstr "Total sum, UAH"
+
+# Substances page
+msgid "substances.edit_catalog"
+msgstr "Edit Catalog"
+
+msgid "substances.catalog_title"
+msgstr "Reagent Catalog"
+
+msgid "substances.name"
+msgstr "Name"
+
+msgid "substances.unit_measurement"
+msgstr "Unit of measurement"
+
+msgid "substances.no_items"
+msgstr "nothing in the catalog"
+
+# DataTable
+msgid "datatable.search"
+msgstr "Search table"
+
+msgid "datatable.first"
+msgstr "First"
+
+msgid "datatable.previous"
+msgstr "Previous"
+
+msgid "datatable.next"
+msgstr "Next"
+
+msgid "datatable.last"
+msgstr "Last"
+
+# Authentication
+msgid "auth.login_failed"
+msgstr "Failed login or password!"
+
+# Buy substance page
+msgid "buy_substance.title"
+msgstr "Warehouse income of reagent (substance, indicator)"
+
+# Add substance page
+msgid "add_substance.title"
+msgstr "Add new name to the catalog of reagents (substances, indicators)"
+
+# Error pages
+msgid "error.404_code"
+msgstr "error 404"
+
+msgid "error.404_message"
+msgstr "page not found"
+
+# Substances edit page
+msgid "substances_edit.title"
+msgstr "Edit reagent catalog"
+
+msgid "substances_edit.new_reagent"
+msgstr "New reagent to catalog"
+
+msgid "substances_edit.delete"
+msgstr "Delete"
+
+# Error messages and notifications
+msgid "No normatives in the list."
+msgstr "No normatives in the list."
+
+msgid "Reagent catalog is empty! Cannot create recipe."
+msgstr "Reagent catalog is empty! Cannot create recipe."
+
+msgid "This name already exists!"
+msgstr "This name already exists!"
+
+# Form field labels - Normatives
+msgid "Solution name"
+msgstr "Solution name"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "solution"
+msgstr "solution"
+
+msgid "mixture"
+msgstr "mixture"
+
+msgid "mark if this solution is used as a component of another solution"
+msgstr "mark if this solution is used as a component of another solution"
+
+msgid "Used as component"
+msgstr "Used as component"
+
+msgid "Volume, yield in ml or g according to type"
+msgstr "Volume, yield in ml or g according to type"
+
+msgid "Number in format 999999.999"
+msgstr "Number in format 999999.999"
+
+msgid "Substances - mark required:"
+msgstr "Substances - mark required:"
+
+msgid "Solutions as components - mark required:"
+msgstr "Solutions as components - mark required:"
+
+msgid "Next"
+msgstr "Next"
+
+msgid "Create recipe"
+msgstr "Create recipe"
+
+# Recipes
+msgid "No added analysis recipes."
+msgstr "No added analysis recipes."
+
+msgid "Analysis name"
+msgstr "Analysis name"
+
+msgid "enter unique analysis name"
+msgstr "enter unique analysis name"
+
+msgid "Substances"
+msgstr "Substances"
+
+msgid "select required substances"
+msgstr "select required substances"
+
+msgid "Solutions"
+msgstr "Solutions"
+
+msgid "select needed solutions"
+msgstr "select needed solutions"
+
+msgid "Create new analysis"
+msgstr "Create new analysis"
+
+msgid "This analysis name already exists!"
+msgstr "This analysis name already exists!"
+
+msgid "Check form fields"
+msgstr "Check form fields"

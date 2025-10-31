@@ -2,15 +2,15 @@
 
 {% block content %}
 <div class="content">
-<a href="/substances/edit" class="btn btn-warning">Редагувати каталог</a>
+<a href="/substances/edit" class="btn btn-warning">{{ _('substances.edit_catalog') }}</a>
 <hr>
-<h1><span class="font-semi-bold">Каталог реактивів</span></h1>
+<h1><span class="font-semi-bold">{{ _('substances.catalog_title') }}</span></h1>
 <table class="table">
     <thead>
         <tr>
             <th>#</th>
-            <th>Назва</th>
-            <th>Од. виміру</th>
+            <th>{{ _('substances.name') }}</th>
+            <th>{{ _('substances.unit_measurement') }}</th>
         </tr>
     </thead>
     <tbody>
@@ -23,7 +23,7 @@
         </tr>
             {% endfor %}
         {% else %}
-        <tr>немає нічого в каталозі</tr>
+        <tr>{{ _('substances.no_items') }}</tr>
         {% endif %}
     </tbody>
 </table>

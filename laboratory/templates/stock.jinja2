@@ -2,20 +2,20 @@
 
 {% block content %}
 <div class="content">
-<h2><span class="font-semi-bold">Склад речовин</span><br>
-<span class="lead">агреговані суми по кількості, вартості</span></h2>
+<h2><span class="font-semi-bold">{{ _('stock.title') }}</span><br>
+<span class="lead">{{ _('stock.subtitle') }}</span></h2>
 <p>{{message}}</p>
 {% if stock_list %}
-<p>Нажміть на кнопку щоб роздрукувати цю сторінку або зберегти в .pdf файл
-	<button onclick=window.print() class="btn btn-primary">Друк</button></p>
+<p>{{ _('stock.print_instruction') }}
+	<button onclick=window.print() class="btn btn-primary">{{ _('stock.print_button') }}</button></p>
 <table id="recipes" class="table table-bordered" style="width:100%">
   <thead>
       <tr>
-          <th>Реактив (речовина, індикатор)</th>
-          <th>Од. вим.</th>
-          <th>Кількість</th>
-          <th>Середня ціна, грн.</th>
-          <th>Загальна cума, грн.</th>
+          <th>{{ _('stock.reactant_substance') }}</th>
+          <th>{{ _('stock.unit_measurement') }}</th>
+          <th>{{ _('stock.quantity') }}</th>
+          <th>{{ _('stock.average_price') }}</th>
+          <th>{{ _('stock.total_sum') }}</th>
       </tr>
   </thead>
   <tbody>
@@ -36,12 +36,12 @@
   $(document).ready(function() {
     $('#recipes').DataTable( {
       language: {
-          search: "Пошук по таблиці",
+          search: "{{ _('datatable.search') }}",
           paginate: {
-            first: "Перша",
-            previous: "Попередня",
-            next: "Наступна",
-            last: "Остання"
+            first: "{{ _('datatable.first') }}",
+            previous: "{{ _('datatable.previous') }}",
+            next: "{{ _('datatable.next') }}",
+            last: "{{ _('datatable.last') }}"
           },
       }
     } );

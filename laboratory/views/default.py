@@ -5,7 +5,7 @@ import deform
 from deform.exception import ValidationFailure
 
 from pyramid.view import view_config
-from pyramid.httpexceptions import HTTPSeeOther
+from pyramid.httpexceptions import HTTPSeeOther, HTTPFound
 
 from .. import models
 
@@ -25,6 +25,18 @@ might be caused by one of the following things:
 After you fix the problem, please restart the Pyramid application to
 try it again.
 """
+
+
+@view_config(route_name="set_locale")
+def set_locale(request):
+    """Set the user's locale preference and redirect back."""
+    locale = request.params.get("locale")
+    came_from = request.referer or request.route_url("home")
+
+    if locale in ["en", "uk"]:
+        request.session["_LOCALE_"] = locale
+
+    return HTTPFound(location=came_from)
 
 
 # ===================

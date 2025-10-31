@@ -1,0 +1,169 @@
+# Ukrainian translations for Laboratory Management System.
+# Copyright (C) 2025 Kostiantyn Ivaschenko
+# This file is distributed under the same license as the laboratory project.
+msgid ""
+msgstr ""
+"Project-Id-Version: Laboratory Management System 1.0.0\n"
+"Report-Msgid-Bugs-To: kivaschenko@gmail.com\n"
+"POT-Creation-Date: 2025-10-31 14:21+0200\n"
+"PO-Revision-Date: 2025-10-31 14:30+0200\n"
+"Last-Translator: Kostiantyn Ivaschenko <kivaschenko@gmail.com>\n"
+"Language: uk\n"
+"Language-Team: uk <LL@li.org>\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+# Application title
+msgid "app.title"
+msgstr "Програма для обліку реактивів в лабораторії"
+
+# Language selector
+msgid "language.switch"
+msgstr "Мова"
+
+# Navigation
+msgid "navigation.home"
+msgstr "Головна сторінка"
+
+msgid "navigation.warehouse"
+msgstr "Склад"
+
+msgid "navigation.substance_catalog"
+msgstr "Реактиви каталог"
+
+msgid "navigation.warehouse_income"
+msgstr "Приход на склад"
+
+msgid "navigation.warehouse_history"
+msgstr "Історія руху по складу"
+
+msgid "navigation.solutions_mixtures"
+msgstr "Розчини і суміші"
+
+msgid "navigation.recipes"
+msgstr "Рецепти"
+
+msgid "navigation.journal"
+msgstr "Журнал"
+
+msgid "navigation.remainders"
+msgstr "Залишки"
+
+msgid "navigation.analysis"
+msgstr "Аналізи"
+
+msgid "navigation.analysis_normatives"
+msgstr "Нормативи аналізів"
+
+msgid "navigation.completed_analysis"
+msgstr "Виконані аналізи"
+
+msgid "navigation.expense_statistics"
+msgstr "Статистика витрат"
+
+msgid "navigation.authorization"
+msgstr "Авторизація"
+
+msgid "navigation.login"
+msgstr "Зайти"
+
+msgid "navigation.logout"
+msgstr "Вийти"
+
+msgid "navigation.change_password"
+msgstr "Змінити пароль"
+
+# Home page
+msgid "home.laboratory"
+msgstr "Лабораторія"
+
+msgid "home.feed_plant"
+msgstr "комбікормовий завод"
+
+msgid "home.journal_filter"
+msgstr "Фільтр по журналам"
+
+msgid "home.faq_help"
+msgstr "Часті питання та допомога"
+
+msgid "home.faq_1"
+msgstr "Використовуйте унікальні назви не тільки в одному каталозі, а й між ними. Тобто назва речовини не може бути однакова з розчином, сумішшю або назвою аналізу. Інакше програма може працювати некоректно!"
+
+msgid "home.faq_2"
+msgstr "Новий рецепт в розділі \"Рецепти\" створює рецепт як для розчину так і для суміші (яка складається виключно із сухих речовин). Потрібний тип треба вибрати у формі."
+
+msgid "home.faq_3"
+msgstr "Якщо рецепт розчину використовується для обліку розчину, який є складовою інших розчинів - потрібно поставити відмітку у формі створення нового рецепту \"Використовується як компонент\"."
+
+msgid "home.faq_4"
+msgstr "В розділі Склад агрегація Загальної суми по кожному реактиву значить, що (Середня ціна по всім Приходам і Розходам складу) * (Сума кількостей всіх Приходів і Розходів) = Загальна сума. Так само рахується і для Залишки розчинів. Тобто Середня ціна, Загальна сума по позиції - це не бухгалтерська точна величина, а дані для управлінського обліку. Щоб розуміти по якій середньообліковій ціні і на яку приблизно суму є залишків конкретної позиції."
+
+msgid "home.faq_5"
+msgstr "Приход на склад можна робити зі знаком мінус у полі форми Кількість. Це може бути корисно, коли потрібно відкорегувати залишки після інвентаризації, коли виявлено надлишок якогось реактива (речовини). Тоді Ціна у формі має бути середня, що можна взяти дані із розділу Склад по цьому реактиву."
+
+# Stock page
+msgid "stock.title"
+msgstr "Склад речовин"
+
+msgid "stock.subtitle"
+msgstr "агреговані суми по кількості, вартості"
+
+msgid "stock.print_instruction"
+msgstr "Нажміть на кнопку щоб роздрукувати цю сторінку або зберегти в .pdf файл"
+
+msgid "stock.print_button"
+msgstr "Друк"
+
+msgid "stock.reactant_substance"
+msgstr "Реактив (речовина, індикатор)"
+
+msgid "stock.unit_measurement"
+msgstr "Од. вим."
+
+msgid "stock.quantity"
+msgstr "Кількість"
+
+msgid "stock.average_price"
+msgstr "Середня ціна, грн."
+
+msgid "stock.total_sum"
+msgstr "Загальна cума, грн."
+
+# Substances page
+msgid "substances.edit_catalog"
+msgstr "Редагувати каталог"
+
+msgid "substances.catalog_title"
+msgstr "Каталог реактивів"
+
+msgid "substances.name"
+msgstr "Назва"
+
+msgid "substances.unit_measurement"
+msgstr "Од. виміру"
+
+msgid "substances.no_items"
+msgstr "немає нічого в каталозі"
+
+# DataTable
+msgid "datatable.search"
+msgstr "Пошук по таблиці"
+
+msgid "datatable.first"
+msgstr "Перша"
+
+msgid "datatable.previous"
+msgstr "Попередня"
+
+msgid "datatable.next"
+msgstr "Наступна"
+
+msgid "datatable.last"
+msgstr "Остання"
+
+# Authentication
+msgid "auth.login_failed"
+msgstr "Невірний логін або пароль!"

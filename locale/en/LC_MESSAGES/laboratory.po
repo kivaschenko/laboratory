@@ -104,6 +104,15 @@ msgstr "In the Warehouse section, aggregation of the Total amount for each reage
 msgid "home.faq_5"
 msgstr "Warehouse income can be made with a minus sign in the Quantity field of the form. This can be useful when you need to adjust balances after inventory, when an excess of some reagent (substance) is found. Then the Price in the form should be average, which can be taken from the Warehouse section for this reagent."
 
+msgid "home.faq_5_additional"
+msgstr "Or at your own discretion. Keep in mind that zero price will change the average price!"
+
+msgid "home.faq_6"
+msgstr "For expense statistics display, keep in mind that the later date is not included. That is, if you need to view from March 15 to March 16, then select dates 03/15/2021 - 03/17/2021"
+
+msgid "home.faq_7"
+msgstr "Since the program works via the internet - it is advisable to periodically change the password, at least once every three months."
+
 # Stock page
 msgid "stock.title"
 msgstr "Substance Warehouse"
@@ -167,3 +176,28 @@ msgstr "Last"
 # Authentication
 msgid "auth.login_failed"
 msgstr "Failed login or password!"
+
+# Buy substance page
+msgid "buy_substance.title"
+msgstr "Warehouse income of reagent (substance, indicator)"
+
+# Add substance page
+msgid "add_substance.title"
+msgstr "Add new name to the catalog of reagents (substances, indicators)"
+
+# Error pages
+msgid "error.404_code"
+msgstr "error 404"
+
+msgid "error.404_message"
+msgstr "page not found"
+
+# Substances edit page
+msgid "substances_edit.title"
+msgstr "Edit reagent catalog"
+
+msgid "substances_edit.new_reagent"
+msgstr "New reagent to catalog"
+
+msgid "substances_edit.delete"
+msgstr "Delete"

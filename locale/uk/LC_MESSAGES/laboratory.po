@@ -201,3 +201,81 @@ msgstr "Новий реактив в каталог"
 
 msgid "substances_edit.delete"
 msgstr "Видалити"
+
+# Error messages and notifications
+msgid "No normatives in the list."
+msgstr "Немає нормативів у списку."
+
+msgid "Reagent catalog is empty! Cannot create recipe."
+msgstr "Каталог реактивів пустий! Неможливо створити рецепт."
+
+msgid "This name already exists!"
+msgstr "Така назва вже існує!"
+
+# Form field labels - Normatives
+msgid "Solution name"
+msgstr "Назва розчину"
+
+msgid "Type"
+msgstr "Тип"
+
+msgid "solution"
+msgstr "розчин"
+
+msgid "mixture"
+msgstr "суміш"
+
+msgid "mark if this solution is used as a component of another solution"
+msgstr "відмітити якщо цей розчин використовується як складова частина іншого розчину"
+
+msgid "Used as component"
+msgstr "Використовується як компонент"
+
+msgid "Volume, yield in ml or g according to type"
+msgstr "Об'єм, вихід в мл або г відповідно типу"
+
+msgid "Number in format 999999.999"
+msgstr "Число у форматі 999999.999"
+
+msgid "Substances - mark required:"
+msgstr "Речовини - відмітити необхідні:"
+
+msgid "Solutions as components - mark required:"
+msgstr "Розчини як компоненти - відмітити необхідні:"
+
+msgid "Next"
+msgstr "Далі"
+
+msgid "Create recipe"
+msgstr "Створити рецепт"
+
+# Recipes
+msgid "No added analysis recipes."
+msgstr "Немає доданих рецептів аналізів."
+
+msgid "Analysis name"
+msgstr "Назва аналізу"
+
+msgid "enter unique analysis name"
+msgstr "введіть унікальну назву аналізу"
+
+msgid "Substances"
+msgstr "Речовини"
+
+msgid "select required substances"
+msgstr "виберіть необхідні речовини"
+
+msgid "Solutions"
+msgstr "Розчини"
+
+msgid "select needed solutions"
+msgstr "виберіть потрібні розчини"
+
+msgid "Create new analysis"
+msgstr "Створити новий аналіз"
+
+msgid "This analysis name already exists!"
+msgstr "Така назва аналізу вже існує!"
+
+msgid "Check form fields"
+msgstr "Перевірте поля форми"

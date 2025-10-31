@@ -201,3 +201,81 @@ msgstr "New reagent to catalog"
 
 msgid "substances_edit.delete"
 msgstr "Delete"
+
+# Error messages and notifications
+msgid "No normatives in the list."
+msgstr "No normatives in the list."
+
+msgid "Reagent catalog is empty! Cannot create recipe."
+msgstr "Reagent catalog is empty! Cannot create recipe."
+
+msgid "This name already exists!"
+msgstr "This name already exists!"
+
+# Form field labels - Normatives
+msgid "Solution name"
+msgstr "Solution name"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "solution"
+msgstr "solution"
+
+msgid "mixture"
+msgstr "mixture"
+
+msgid "mark if this solution is used as a component of another solution"
+msgstr "mark if this solution is used as a component of another solution"
+
+msgid "Used as component"
+msgstr "Used as component"
+
+msgid "Volume, yield in ml or g according to type"
+msgstr "Volume, yield in ml or g according to type"
+
+msgid "Number in format 999999.999"
+msgstr "Number in format 999999.999"
+
+msgid "Substances - mark required:"
+msgstr "Substances - mark required:"
+
+msgid "Solutions as components - mark required:"
+msgstr "Solutions as components - mark required:"
+
+msgid "Next"
+msgstr "Next"
+
+msgid "Create recipe"
+msgstr "Create recipe"
+
+# Recipes
+msgid "No added analysis recipes."
+msgstr "No added analysis recipes."
+
+msgid "Analysis name"
+msgstr "Analysis name"
+
+msgid "enter unique analysis name"
+msgstr "enter unique analysis name"
+
+msgid "Substances"
+msgstr "Substances"
+
+msgid "select required substances"
+msgstr "select required substances"
+
+msgid "Solutions"
+msgstr "Solutions"
+
+msgid "select needed solutions"
+msgstr "select needed solutions"
+
+msgid "Create new analysis"
+msgstr "Create new analysis"
+
+msgid "This analysis name already exists!"
+msgstr "This analysis name already exists!"
+
+msgid "Check form fields"
+msgstr "Check form fields"
